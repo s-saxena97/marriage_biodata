@@ -1,3 +1,6 @@
+
+
+Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +35,7 @@
     font-family:'Mulish',sans-serif;
     color:var(--ink);
   }
-
+ 
   /* ---------- Toolbar ---------- */
   .toolbar{
     position:sticky;
@@ -49,12 +52,14 @@
     border-bottom:1px solid rgba(184,134,60,0.35);
   }
   .toolbar-brand{
+    display:none;
     font-family:'Cormorant Garamond',serif;
     font-size:22px;
     font-weight:600;
     color:var(--gold-light);
     letter-spacing:0.5px;
   }
+  body.edit-mode .toolbar-brand{display:block;}
   .toolbar-brand span{color:#e8ddc7;font-weight:500;}
   .toolbar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .btn{
@@ -77,19 +82,37 @@
     border-color:var(--gold);
   }
   .btn.primary:hover{background:var(--gold-light);}
-  .btn.subtle{color:#e8ddc7;border-color:rgba(232,221,199,0.28);}
   .btn[hidden]{display:none;}
-  .mode-pill{
-    border:1px solid rgba(217,184,114,0.4);
-    border-radius:999px;
+ 
+  .mode-toggle{
+    display:flex;
+    gap:3px;
+    background:rgba(0,0,0,0.22);
+    padding:4px;
+    border-radius:9px;
+    border:1px solid rgba(217,184,114,0.3);
+  }
+  .mode-btn{
+    border:none;
+    background:transparent;
     color:#e8ddc7;
+    opacity:.7;
     font-size:12px;
     font-weight:800;
-    letter-spacing:0.7px;
-    padding:8px 12px;
+    letter-spacing:0.5px;
     text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
   }
-
+  .mode-btn:hover{opacity:.9;}
+  .mode-btn.active{
+    background:var(--gold);
+    color:var(--maroon-deep);
+    opacity:1;
+  }
+  .mode-btn.active:hover{background:var(--gold-light);}
+ 
   /* ---------- Page / Paper ---------- */
   .page-wrap{
     display:flex;
@@ -106,13 +129,13 @@
   }
   @keyframes riseIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){ .paper{animation:none;} }
-
+ 
   .corner{position:absolute;width:56px;height:56px;pointer-events:none;}
   .corner-tl{top:14px;left:14px;}
   .corner-tr{top:14px;right:14px;transform:scaleX(-1);}
   .corner-bl{bottom:14px;left:14px;transform:scaleY(-1);}
   .corner-br{bottom:14px;right:14px;transform:scale(-1,-1);}
-
+ 
   /* ---------- Header ---------- */
   .doc-header{
     display:flex;
@@ -135,13 +158,18 @@
   }
   body.edit-mode .photo-frame{cursor:pointer;}
   .photo-frame img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    object-position:center;
-    transform-origin:center;
+    position:absolute;
+    top:0;
+    left:0;
+    max-width:none;
+    max-height:none;
     display:block;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-drag:none;
   }
+  body.edit-mode .photo-frame img{cursor:grab;}
+  .photo-frame img:active{cursor:grabbing;}
   .photo-placeholder{
     display:flex;
     flex-direction:column;
@@ -166,7 +194,7 @@
   body.edit-mode .photo-tools{display:flex;}
   .photo-tools label{
     display:grid;
-    grid-template-columns:64px 1fr;
+    grid-template-columns:44px 1fr;
     align-items:center;
     gap:8px;
     color:var(--emerald);
@@ -174,6 +202,19 @@
     font-weight:800;
   }
   .photo-tools input{width:100%;}
+  .photo-tools-hint{margin:0;font-size:10.5px;color:var(--muted);line-height:1.4;}
+  .mini-link{
+    align-self:flex-start;
+    background:none;
+    border:none;
+    color:var(--gold);
+    font-size:11px;
+    font-weight:800;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:0;
+  }
+  .mini-link:hover{color:var(--maroon);}
   .photo-block{flex:none;width:128px;}
   .header-text{flex:1;min-width:0;}
   .eyebrow{
@@ -194,7 +235,7 @@
     letter-spacing:0.5px;
     word-break:break-word;
   }
-
+ 
   .top-divider{
     display:flex;
     align-items:center;
@@ -204,17 +245,20 @@
   }
   .top-divider .line{flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);}
   .top-divider svg{flex:none;}
-
+ 
   /* ---------- Sections ---------- */
   .biodata-section{
     margin-bottom:26px;
     break-inside:avoid;
     page-break-inside:avoid;
+    transition:opacity .15s ease;
   }
+  .biodata-section.dragging{opacity:.35;}
+  .biodata-section.drag-over{outline:2px dashed var(--gold);outline-offset:6px;border-radius:4px;}
   .section-head{
     display:flex;
     align-items:center;
-    gap:10px;
+    gap:6px;
     margin-bottom:10px;
   }
   .section-glyph{flex:none;}
@@ -229,7 +273,7 @@
     flex:1;
     min-width:0;
   }
-  .sec-del{
+  .sec-move, .sec-del{
     flex:none;
     width:22px;height:22px;
     border-radius:50%;
@@ -237,15 +281,18 @@
     background:transparent;
     color:var(--muted);
     cursor:pointer;
-    font-size:13px;
+    font-size:12px;
     line-height:1;
     display:none;align-items:center;justify-content:center;
     opacity:.55;
     transition:opacity .15s, color .15s, border-color .15s;
   }
-  body.edit-mode .sec-del{display:flex;}
-  .sec-del:hover{opacity:1;color:var(--maroon);border-color:var(--maroon);}
-
+  body.edit-mode .sec-move, body.edit-mode .sec-del{display:flex;}
+  .sec-move:hover, .sec-del:hover{opacity:1;color:var(--maroon);border-color:var(--maroon);}
+  .sec-move[disabled]{opacity:.18;pointer-events:none;}
+  .drag-handle{cursor:grab;font-size:13px;letter-spacing:-2px;}
+  .drag-handle:active{cursor:grabbing;}
+ 
   .section-intro{
     margin:0 0 12px;
     font-size:14.5px;
@@ -253,7 +300,7 @@
     color:var(--ink);
   }
   .placeholder-text{color:var(--muted) !important;font-style:italic;}
-
+ 
   .fields-list{display:flex;flex-direction:column;gap:7px;}
   .field-row{
     display:grid;
@@ -283,13 +330,13 @@
   body.edit-mode .row-del{display:flex;}
   body.edit-mode .field-row:hover .row-del{opacity:.6;border-color:var(--muted);}
   .row-del:hover{opacity:1 !important;color:var(--maroon);border-color:var(--maroon);}
-
+ 
   [contenteditable="true"]:focus{
     outline:1px dashed var(--gold);
     outline-offset:2px;
     background:rgba(184,134,60,0.08);
   }
-
+ 
   .add-field-btn, .add-section-btn{
     margin-top:8px;
     font-family:'Mulish',sans-serif;
@@ -314,7 +361,7 @@
     margin-top:10px;
   }
   .add-section-btn:hover{background:rgba(184,134,60,0.08);}
-
+ 
   .hint{
     text-align:center;
     font-size:11.5px;
@@ -334,7 +381,7 @@
     box-shadow:0 18px 44px -30px rgba(0,0,0,0.32);
     padding:18px 20px;
   }
-  .changelog.open{display:block;}
+  body.edit-mode .changelog.open{display:block;}
   .changelog h2{
     margin:0 0 10px;
     font-family:'Cormorant Garamond',serif;
@@ -350,7 +397,7 @@
     overflow:auto;
   }
   .changelog-empty{color:var(--muted);font-style:italic;}
-
+ 
   @media (max-width:640px){
     .paper{padding:34px 22px 30px;}
     .doc-header{flex-direction:column;text-align:center;}
@@ -360,7 +407,7 @@
     body.edit-mode .row-del{opacity:.6;}
     .toolbar{padding:12px 14px;}
   }
-
+ 
   /* ---------- Print ---------- */
   @media print{
     @page{size:A4;margin:14mm;}
@@ -374,33 +421,34 @@
 </style>
 </head>
 <body class="view-mode">
-
+ 
 <div class="toolbar no-print">
   <div class="toolbar-brand">Biodata <span>Builder</span></div>
   <div class="toolbar-actions">
-    <span class="mode-pill" id="modePill">View only</span>
-    <button class="btn primary" id="editModeBtn">Enter edit mode</button>
-    <button class="btn subtle" id="exitEditBtn" hidden>Exit edit mode</button>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="viewOnlyBtn">View only</button>
+      <button class="mode-btn" id="editModeBtn">Edit mode</button>
+    </div>
     <button class="btn" id="addSectionTopBtn" hidden>+ Add section</button>
     <button class="btn" id="saveBtn" hidden>Save as .biodata</button>
     <button class="btn" id="loadBtn">Open saved file</button>
-    <button class="btn" id="toggleLogBtn">Change log</button>
+    <button class="btn" id="toggleLogBtn" hidden>Change log</button>
     <button class="btn" id="exportDocBtn">Export Word (.doc)</button>
     <button class="btn primary" id="exportPdfBtn">Export PDF</button>
     <input type="file" id="loadInput" accept=".biodata,.json,application/json" hidden>
   </div>
 </div>
-
+ 
 <div class="page-wrap">
   <div class="paper" id="paper">
     <svg class="corner corner-tl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-tr" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-bl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-br" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
-
+ 
     <header class="doc-header">
       <div class="photo-block">
-        <div class="photo-frame no-print-border" id="photoFrame" title="Enter edit mode to add a photo">
+        <div class="photo-frame no-print-border" id="photoFrame" title="Switch to Edit mode to add a photo">
           <img id="photoImg" alt="Photo" hidden>
           <div class="photo-placeholder" id="photoPlaceholder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>
@@ -409,9 +457,9 @@
           <input type="file" id="photoInput" accept="image/*" hidden>
         </div>
         <div class="photo-tools no-print" id="photoTools">
-          <label>Zoom <input type="range" id="photoZoom" min="1" max="2.5" value="1" step="0.01"></label>
-          <label>X Align <input type="range" id="photoX" min="0" max="100" value="50" step="1"></label>
-          <label>Y Align <input type="range" id="photoY" min="0" max="100" value="50" step="1"></label>
+          <label>Zoom <input type="range" id="photoZoom" min="1" max="3" value="1" step="0.01"></label>
+          <button type="button" class="mini-link" id="changePhotoBtn">Change photo</button>
+          <p class="photo-tools-hint">Drag the photo to reposition it, or pinch to zoom on touch screens. The photo always fills the frame.</p>
         </div>
       </div>
       <div class="header-text">
@@ -419,35 +467,34 @@
         <h1 class="name editable" id="nameField">Vinil Saxena</h1>
       </div>
     </header>
-
+ 
     <div class="top-divider no-print-border">
       <div class="line"></div>
       <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" transform="rotate(45 8 8)" fill="var(--gold)"/></svg>
       <div class="line"></div>
     </div>
-
+ 
     <div id="sectionsContainer"></div>
-
+ 
     <button class="add-section-btn no-print" id="addSectionBottomBtn">+ Add new section</button>
-    <p class="hint no-print" id="modeHint">View-only mode is active. Use Enter edit mode to make changes.</p>
+    <p class="hint no-print" id="modeHint">View-only mode is active. Use Edit mode to make changes.</p>
   </div>
 </div>
-
+ 
 <div class="panel no-print">
   <aside class="changelog" id="changelogPanel">
     <h2>Change log</h2>
     <ol class="changelog-list" id="changelogList"></ol>
   </aside>
 </div>
-
+ 
 <script>
 (function(){
   const AUTH_CODE = '1042';
-  const FILE_VERSION = 1;
+  const FILE_VERSION = 2;
   const sectionsContainer = document.getElementById('sectionsContainer');
   const editModeBtn = document.getElementById('editModeBtn');
-  const exitEditBtn = document.getElementById('exitEditBtn');
-  const modePill = document.getElementById('modePill');
+  const viewOnlyBtn = document.getElementById('viewOnlyBtn');
   const modeHint = document.getElementById('modeHint');
   const addSectionTopBtn = document.getElementById('addSectionTopBtn');
   const saveBtn = document.getElementById('saveBtn');
@@ -458,7 +505,8 @@
   const changelogList = document.getElementById('changelogList');
   let editMode = false;
   let changeLog = [];
-
+  let dragSrcEl = null;
+ 
   const defaultSections = [
     {
       title: 'Profile',
@@ -515,12 +563,12 @@
       ]
     }
   ];
-
+ 
   function addChange(message){
     changeLog.unshift({message, at: new Date().toISOString()});
     renderChangeLog();
   }
-
+ 
   function renderChangeLog(){
     changelogList.innerHTML = '';
     if(!changeLog.length){
@@ -536,23 +584,35 @@
       changelogList.appendChild(item);
     });
   }
-
+ 
+  function refreshSectionControls(){
+    const sections = Array.from(sectionsContainer.children);
+    sections.forEach((sec, idx) => {
+      const upBtn = sec.querySelector('[data-move="up"]');
+      const downBtn = sec.querySelector('[data-move="down"]');
+      if(upBtn) upBtn.disabled = idx === 0;
+      if(downBtn) downBtn.disabled = idx === sections.length - 1;
+    });
+  }
+ 
   function setEditableState(){
     document.body.classList.toggle('edit-mode', editMode);
     document.body.classList.toggle('view-mode', !editMode);
-    modePill.textContent = editMode ? 'Editing' : 'View only';
+    viewOnlyBtn.classList.toggle('active', !editMode);
+    editModeBtn.classList.toggle('active', editMode);
     modeHint.textContent = editMode
       ? 'Editing is active. Save your biodata file when you want to keep your progress.'
-      : 'View-only mode is active. Use Enter edit mode to make changes.';
-    editModeBtn.hidden = editMode;
-    exitEditBtn.hidden = !editMode;
+      : 'View-only mode is active. Use Edit mode to make changes.';
     addSectionTopBtn.hidden = !editMode;
     saveBtn.hidden = !editMode;
+    toggleLogBtn.hidden = !editMode;
+    if(!editMode){ changelogPanel.classList.remove('open'); }
     document.querySelectorAll('.editable').forEach(el => {
       el.contentEditable = editMode ? 'true' : 'false';
     });
+    refreshSectionControls();
   }
-
+ 
   function attachPlaceholderBehavior(el, placeholder, multiline){
     function markPlaceholder(){
       el.textContent = placeholder;
@@ -572,7 +632,14 @@
       if(el.textContent.trim() === ''){ markPlaceholder(); }
     });
     el.addEventListener('input', function(){
-      addChange(`Updated ${el.dataset.fieldName || 'content'}`);
+      const label = el.dataset.fieldName || 'content';
+      const sec = el.closest('.biodata-section');
+      if(sec){
+        const secTitle = sec.querySelector('.section-title').innerText.trim() || 'Untitled section';
+        addChange(`Updated ${label} in "${secTitle}"`);
+      } else {
+        addChange(`Updated ${label}`);
+      }
     });
     if(!multiline){
       el.addEventListener('keydown', function(e){
@@ -580,7 +647,7 @@
       });
     }
   }
-
+ 
   function selectAllText(el){
     const range = document.createRange();
     range.selectNodeContents(el);
@@ -588,61 +655,94 @@
     sel.removeAllRanges();
     sel.addRange(range);
   }
-
+ 
   function makeSectionGlyph(){
     const wrap = document.createElement('div');
     wrap.innerHTML = '<svg class="section-glyph" width="40" height="12" viewBox="0 0 40 12"><line x1="0" y1="6" x2="14" y2="6" stroke="#B8863C" stroke-width="1"/><rect x="17" y="3" width="6" height="6" transform="rotate(45 20 6)" fill="#B8863C"/><line x1="26" y1="6" x2="40" y2="6" stroke="#B8863C" stroke-width="1"/></svg>';
     return wrap.firstElementChild;
   }
-
+ 
   function createFieldRow(label, value, isNew){
     const row = document.createElement('div');
     row.className = 'field-row';
-
+ 
     const labelEl = document.createElement('span');
     labelEl.className = 'field-label editable';
     labelEl.dataset.fieldName = 'field label';
     labelEl.textContent = label;
-
+ 
     const sep = document.createElement('span');
     sep.className = 'field-sep';
     sep.textContent = ':';
-
+ 
     const valueEl = document.createElement('span');
     valueEl.className = 'field-value editable';
     valueEl.dataset.fieldName = 'field details';
     valueEl.textContent = value;
-
+ 
     const delBtn = document.createElement('button');
     delBtn.className = 'row-del no-print';
     delBtn.title = 'Remove field';
     delBtn.innerHTML = '&times;';
     delBtn.addEventListener('click', () => {
+      const sec = row.closest('.biodata-section');
+      const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
       row.remove();
-      addChange('Removed a field');
+      addChange(secTitle ? `Removed a field from "${secTitle}"` : 'Removed a field');
     });
-
+ 
     attachPlaceholderBehavior(labelEl, 'Label', false);
     attachPlaceholderBehavior(valueEl, 'Details', false);
-
+ 
     row.append(labelEl, sep, valueEl, delBtn);
     setEditableState();
-
+ 
     if(isNew){
       setTimeout(() => { labelEl.focus(); selectAllText(labelEl); }, 0);
     }
     return row;
   }
-
+ 
+  function moveSection(section, direction){
+    if(!editMode) return;
+    const secTitle = section.querySelector('.section-title').innerText.trim() || 'Untitled section';
+    if(direction === -1 && section.previousElementSibling){
+      sectionsContainer.insertBefore(section, section.previousElementSibling);
+      addChange(`Moved section "${secTitle}" up`);
+    } else if(direction === 1 && section.nextElementSibling){
+      sectionsContainer.insertBefore(section.nextElementSibling, section);
+      addChange(`Moved section "${secTitle}" down`);
+    }
+    refreshSectionControls();
+    section.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+ 
   function createSection(data, isNew){
     const section = document.createElement('section');
     section.className = 'biodata-section';
-
+ 
     const head = document.createElement('div');
     head.className = 'section-head';
-
+ 
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'sec-move drag-handle no-print';
+    dragHandle.title = 'Drag to reorder';
+    dragHandle.innerHTML = '&#8942;&#8942;';
+    dragHandle.draggable = true;
+    dragHandle.addEventListener('dragstart', (e) => {
+      if(!editMode){ e.preventDefault(); return; }
+      dragSrcEl = section;
+      section.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', ''); }catch(err){}
+    });
+    dragHandle.addEventListener('dragend', () => {
+      section.classList.remove('dragging');
+      document.querySelectorAll('.biodata-section.drag-over').forEach(s => s.classList.remove('drag-over'));
+    });
+ 
     const glyph = makeSectionGlyph();
-
+ 
     const titleEl = document.createElement('h2');
     titleEl.className = 'section-title editable';
     titleEl.dataset.fieldName = 'section title';
@@ -650,8 +750,22 @@
     titleEl.addEventListener('keydown', function(e){
       if(e.key === 'Enter'){ e.preventDefault(); titleEl.blur(); }
     });
-    titleEl.addEventListener('input', () => addChange('Updated section title'));
-
+    titleEl.addEventListener('input', () => addChange(`Renamed section to "${titleEl.innerText.trim() || 'Untitled'}"`));
+ 
+    const moveUpBtn = document.createElement('button');
+    moveUpBtn.className = 'sec-move no-print';
+    moveUpBtn.dataset.move = 'up';
+    moveUpBtn.title = 'Move section up';
+    moveUpBtn.innerHTML = '&uarr;';
+    moveUpBtn.addEventListener('click', () => moveSection(section, -1));
+ 
+    const moveDownBtn = document.createElement('button');
+    moveDownBtn.className = 'sec-move no-print';
+    moveDownBtn.dataset.move = 'down';
+    moveDownBtn.title = 'Move section down';
+    moveDownBtn.innerHTML = '&darr;';
+    moveDownBtn.addEventListener('click', () => moveSection(section, 1));
+ 
     const secDel = document.createElement('button');
     secDel.className = 'sec-del no-print';
     secDel.title = 'Remove section';
@@ -659,20 +773,40 @@
     secDel.addEventListener('click', () => {
       section.remove();
       addChange(`Removed section "${titleEl.innerText.trim() || 'Untitled'}"`);
+      refreshSectionControls();
     });
-
-    head.append(glyph, titleEl, secDel);
-
+ 
+    head.append(dragHandle, glyph, titleEl, moveUpBtn, moveDownBtn, secDel);
+ 
+    section.addEventListener('dragover', (e) => {
+      if(!editMode || !dragSrcEl) return;
+      e.preventDefault();
+      if(dragSrcEl !== section){ section.classList.add('drag-over'); }
+    });
+    section.addEventListener('dragleave', () => section.classList.remove('drag-over'));
+    section.addEventListener('drop', (e) => {
+      e.preventDefault();
+      section.classList.remove('drag-over');
+      if(dragSrcEl && dragSrcEl !== section){
+        const rect = section.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        sectionsContainer.insertBefore(dragSrcEl, before ? section : section.nextSibling);
+        addChange(`Reordered section "${dragSrcEl.querySelector('.section-title').innerText.trim() || 'Untitled section'}"`);
+      }
+      dragSrcEl = null;
+      refreshSectionControls();
+    });
+ 
     const introEl = document.createElement('p');
     introEl.className = 'section-intro editable';
     introEl.dataset.fieldName = 'section note';
     introEl.textContent = data.intro || '';
     attachPlaceholderBehavior(introEl, 'Add a short note for this section (optional)', true);
-
+ 
     const fieldsList = document.createElement('div');
     fieldsList.className = 'fields-list';
     (data.fields || []).forEach(f => fieldsList.appendChild(createFieldRow(f.label, f.value, false)));
-
+ 
     const addFieldBtn = document.createElement('button');
     addFieldBtn.className = 'add-field-btn no-print';
     addFieldBtn.textContent = '+ Add field';
@@ -680,21 +814,21 @@
       fieldsList.appendChild(createFieldRow('Label', 'Details', true));
       addChange(`Added a field to "${titleEl.innerText.trim() || 'Untitled'}"`);
     });
-
+ 
     section.append(head, introEl, fieldsList, addFieldBtn);
     setEditableState();
-
+ 
     if(isNew){
       setTimeout(() => { selectAllText(titleEl); titleEl.focus(); }, 0);
     }
     return section;
   }
-
+ 
   function readText(el){
     if(!el || el.dataset.isPlaceholder === '1') return '';
     return el.innerText.trim();
   }
-
+ 
   function getDocumentData(){
     return {
       version: FILE_VERSION,
@@ -703,9 +837,9 @@
       name: readText(document.getElementById('nameField')),
       photo: {
         src: photoImg.hidden ? '' : photoImg.src,
-        zoom: Number(photoZoom.value),
-        x: Number(photoX.value),
-        y: Number(photoY.value)
+        zoom: photoState.zoom,
+        offsetX: photoState.offsetX,
+        offsetY: photoState.offsetY
       },
       sections: Array.from(document.querySelectorAll('.biodata-section')).map(sec => ({
         title: readText(sec.querySelector('.section-title')),
@@ -718,7 +852,7 @@
       changeLog
     };
   }
-
+ 
   function loadDocumentData(data){
     document.getElementById('eyebrowField').textContent = data.eyebrow || 'Marriage Biodata';
     document.getElementById('nameField').textContent = data.name || 'Full Name';
@@ -726,39 +860,28 @@
     (data.sections && data.sections.length ? data.sections : defaultSections)
       .forEach(s => sectionsContainer.appendChild(createSection(s, false)));
     if(data.photo && data.photo.src){
-      photoImg.src = data.photo.src;
-      photoImg.hidden = false;
-      photoPlaceholder.hidden = true;
-      photoZoom.value = data.photo.zoom || 1;
-      photoX.value = data.photo.x || 50;
-      photoY.value = data.photo.y || 50;
-      applyPhotoCrop();
+      setPhotoSrc(data.photo.src, {zoom: data.photo.zoom, offsetX: data.photo.offsetX, offsetY: data.photo.offsetY});
     } else {
-      photoImg.removeAttribute('src');
-      photoImg.hidden = true;
-      photoPlaceholder.hidden = false;
-      photoZoom.value = 1;
-      photoX.value = 50;
-      photoY.value = 50;
-      applyPhotoCrop();
+      clearPhoto();
     }
     changeLog = Array.isArray(data.changeLog) ? data.changeLog : [];
     renderChangeLog();
     setEditableState();
   }
-
+ 
   function addNewSection(){
     if(!editMode) return;
     const section = createSection({title:'New Section', intro:'', fields:[{label:'Label', value:'Details'}]}, true);
     sectionsContainer.appendChild(section);
-    addChange('Added a new section');
+    addChange('Added a new section "New Section"');
+    refreshSectionControls();
     section.scrollIntoView({behavior:'smooth', block:'center'});
   }
-
+ 
   function escapeHtml(str){
     return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
-
+ 
   function downloadBlob(content, filename, mime){
     const blob = new Blob(['\ufeff', content], {type: mime});
     const url = URL.createObjectURL(blob);
@@ -770,16 +893,12 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-
-  function applyPhotoCrop(){
-    photoImg.style.objectPosition = `${photoX.value}% ${photoY.value}%`;
-    photoImg.style.transform = `scale(${photoZoom.value})`;
-  }
-
+ 
   addSectionTopBtn.addEventListener('click', addNewSection);
   document.getElementById('addSectionBottomBtn').addEventListener('click', addNewSection);
-
+ 
   editModeBtn.addEventListener('click', () => {
+    if(editMode) return;
     const code = window.prompt('Enter the 4-digit edit code');
     if(code === AUTH_CODE){
       editMode = true;
@@ -789,59 +908,153 @@
       window.alert('Incorrect code. View-only mode remains active.');
     }
   });
-
-  exitEditBtn.addEventListener('click', () => {
+ 
+  viewOnlyBtn.addEventListener('click', () => {
+    if(!editMode) return;
     editMode = false;
     setEditableState();
     addChange('Exited edit mode');
   });
-
+ 
   document.getElementById('nameField').dataset.fieldName = 'name';
   document.getElementById('eyebrowField').dataset.fieldName = 'document label';
   attachPlaceholderBehavior(document.getElementById('nameField'), 'Full Name', false);
   attachPlaceholderBehavior(document.getElementById('eyebrowField'), 'Marriage Biodata', false);
-
+ 
+  /* ---------- Photo: fills the frame, drag to pan, pinch / slider to zoom ---------- */
   const photoFrame = document.getElementById('photoFrame');
   const photoInput = document.getElementById('photoInput');
   const photoImg = document.getElementById('photoImg');
   const photoPlaceholder = document.getElementById('photoPlaceholder');
   const photoZoom = document.getElementById('photoZoom');
-  const photoX = document.getElementById('photoX');
-  const photoY = document.getElementById('photoY');
-
+  const changePhotoBtn = document.getElementById('changePhotoBtn');
+ 
+  let photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
+ 
+  function updatePhotoTransform(){
+    if(!photoState.naturalW) return;
+    const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
+    const scale = photoState.baseScale * photoState.zoom;
+    const w = photoState.naturalW * scale;
+    const h = photoState.naturalH * scale;
+    let left = (frameW - w) / 2 + photoState.offsetX;
+    let top = (frameH - h) / 2 + photoState.offsetY;
+    left = Math.min(0, Math.max(frameW - w, left));
+    top = Math.min(0, Math.max(frameH - h, top));
+    photoImg.style.width = w + 'px';
+    photoImg.style.height = h + 'px';
+    photoImg.style.left = left + 'px';
+    photoImg.style.top = top + 'px';
+  }
+ 
+  function setPhotoSrc(src, saved){
+    photoImg.onload = () => {
+      const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
+      photoState.naturalW = photoImg.naturalWidth;
+      photoState.naturalH = photoImg.naturalHeight;
+      photoState.baseScale = Math.max(frameW / photoState.naturalW, frameH / photoState.naturalH);
+      photoState.zoom = (saved && saved.zoom) || 1;
+      photoState.offsetX = (saved && saved.offsetX) || 0;
+      photoState.offsetY = (saved && saved.offsetY) || 0;
+      photoZoom.value = photoState.zoom;
+      photoImg.hidden = false;
+      photoPlaceholder.hidden = true;
+      updatePhotoTransform();
+    };
+    photoImg.src = src;
+  }
+ 
+  function clearPhoto(){
+    photoImg.onload = null;
+    photoImg.removeAttribute('src');
+    photoImg.hidden = true;
+    photoPlaceholder.hidden = false;
+    photoZoom.value = 1;
+    photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
+  }
+ 
   photoFrame.addEventListener('click', () => {
-    if(editMode) photoInput.click();
+    if(!editMode) return;
+    if(!photoImg.hidden) return; // photo already present - use "Change photo" so drags don't reopen the file picker
+    photoInput.click();
   });
+  changePhotoBtn.addEventListener('click', () => photoInput.click());
   photoInput.addEventListener('change', () => {
     const file = photoInput.files && photoInput.files[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = e => {
-      photoImg.src = e.target.result;
-      photoImg.hidden = false;
-      photoPlaceholder.hidden = true;
-      photoZoom.value = 1;
-      photoX.value = 50;
-      photoY.value = 50;
-      applyPhotoCrop();
+      setPhotoSrc(e.target.result, null);
       addChange('Updated profile photo');
     };
     reader.readAsDataURL(file);
   });
-  [photoZoom, photoX, photoY].forEach(input => {
-    input.addEventListener('input', () => {
-      applyPhotoCrop();
-      addChange('Adjusted profile photo crop');
-    });
+  photoZoom.addEventListener('input', () => {
+    photoState.zoom = parseFloat(photoZoom.value);
+    updatePhotoTransform();
+    addChange('Adjusted photo zoom');
   });
-
+ 
+  // drag / touch pan
+  let dragging = false, dragStartX = 0, dragStartY = 0, startOffX = 0, startOffY = 0;
+  function panStart(x, y){
+    if(!editMode || photoImg.hidden) return;
+    dragging = true;
+    dragStartX = x; dragStartY = y;
+    startOffX = photoState.offsetX; startOffY = photoState.offsetY;
+  }
+  function panMove(x, y){
+    if(!dragging) return;
+    photoState.offsetX = startOffX + (x - dragStartX);
+    photoState.offsetY = startOffY + (y - dragStartY);
+    updatePhotoTransform();
+  }
+  function panEnd(){
+    if(dragging){ dragging = false; addChange('Repositioned photo'); }
+  }
+  photoImg.addEventListener('mousedown', e => { e.preventDefault(); panStart(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', e => panMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', panEnd);
+ 
+  // pinch to zoom + single-finger pan on touch
+  let pinchStartDist = 0, pinchStartZoom = 1;
+  function touchDist(t0, t1){ return Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY); }
+  photoImg.addEventListener('touchstart', e => {
+    if(!editMode) return;
+    if(e.touches.length === 2){
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartZoom = photoState.zoom;
+      dragging = false;
+    } else if(e.touches.length === 1){
+      panStart(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, {passive:true});
+  window.addEventListener('touchmove', e => {
+    if(e.touches.length === 2 && pinchStartDist){
+      const dist = touchDist(e.touches[0], e.touches[1]);
+      let newZoom = pinchStartZoom * (dist / pinchStartDist);
+      newZoom = Math.min(3, Math.max(1, newZoom));
+      photoState.zoom = newZoom;
+      photoZoom.value = newZoom;
+      updatePhotoTransform();
+    } else if(e.touches.length === 1){
+      panMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, {passive:true});
+  window.addEventListener('touchend', e => {
+    if(e.touches.length === 0){
+      if(pinchStartDist){ pinchStartDist = 0; addChange('Adjusted photo zoom'); }
+      panEnd();
+    }
+  });
+ 
   saveBtn.addEventListener('click', () => {
     const data = getDocumentData();
     const name = data.name || 'Biodata';
     downloadBlob(JSON.stringify(data, null, 2), `${name.replace(/\s+/g,'_')}.biodata`, 'application/json');
     addChange('Saved a biodata file');
   });
-
+ 
   loadBtn.addEventListener('click', () => loadInput.click());
   loadInput.addEventListener('change', () => {
     const file = loadInput.files && loadInput.files[0];
@@ -857,25 +1070,26 @@
       }
     };
     reader.readAsText(file);
+    loadInput.value = '';
   });
-
+ 
   toggleLogBtn.addEventListener('click', () => {
     changelogPanel.classList.toggle('open');
   });
-
+ 
   document.getElementById('exportPdfBtn').addEventListener('click', () => {
     window.print();
   });
-
+ 
   document.getElementById('exportDocBtn').addEventListener('click', () => {
     const data = getDocumentData();
     const name = data.name || 'Biodata';
     const eyebrow = data.eyebrow || '';
     let photoTag = '';
     if(data.photo.src){
-      photoTag = `<img src="${data.photo.src}" width="150" height="188" style="border:3px solid #B8863C;padding:4px;object-fit:cover;object-position:${data.photo.x}% ${data.photo.y}%;" />`;
+      photoTag = `<img src="${data.photo.src}" width="150" height="188" style="border:3px solid #B8863C;padding:4px;object-fit:cover;" />`;
     }
-
+ 
     let sectionsHtml = '';
     data.sections.forEach(sec => {
       let fieldsHtml = '';
@@ -888,7 +1102,7 @@
           </tr>`;
         }
       });
-
+ 
       if(!sec.title && !sec.intro && !fieldsHtml) return;
       sectionsHtml += `
         <h2 style="color:#5B1220;border-bottom:1px solid #B8863C;padding-bottom:4px;font-family:Georgia,serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;margin:22px 0 8px;">${escapeHtml(sec.title)}</h2>
@@ -896,7 +1110,7 @@
         ${fieldsHtml ? `<table style="border-collapse:collapse;font-size:13px;">${fieldsHtml}</table>` : ''}
       `;
     });
-
+ 
     const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8"><title>${escapeHtml(name)}</title></head>
     <body style="font-family:Calibri,Arial,sans-serif;color:#2A1B12;">
@@ -909,10 +1123,10 @@
       </tr></table>
       ${sectionsHtml}
     </body></html>`;
-
+ 
     downloadBlob(fullHtml, name.replace(/\s+/g,'_') + '_Biodata.doc', 'application/msword');
   });
-
+ 
   defaultSections.forEach(s => sectionsContainer.appendChild(createSection(s, false)));
   renderChangeLog();
   setEditableState();
