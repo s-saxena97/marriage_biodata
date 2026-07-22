@@ -1,0 +1,11 @@
+{
+  "name": "biodata-builder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo \"Static frontend app: no build step required\"",
+    "start": "npx serve ."
+  }
+}
