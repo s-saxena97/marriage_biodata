@@ -1,11 +1,7 @@
 {
   "name": "biodata-builder",
-  "version": "1.0.0",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "npx serve public",
-    "build": "node -e \"require('fs').mkdirSync('public', { recursive: true }); console.log('Static frontend app ready in public/')\"",
-    "start": "npx serve public"
+    "build": "node build.js"
   }
 }
