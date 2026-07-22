@@ -1,7 +1,0 @@
-{
-  "name": "biodata-builder",
-  "private": true,
-  "scripts": {
-    "build": "echo Static site"
-  }
-}
