@@ -1,6 +1,3 @@
-
-
-Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,7 +32,7 @@ Index · HTML
     font-family:'Mulish',sans-serif;
     color:var(--ink);
   }
- 
+
   /* ---------- Toolbar ---------- */
   .toolbar{
     position:sticky;
@@ -83,7 +80,9 @@ Index · HTML
   }
   .btn.primary:hover{background:var(--gold-light);}
   .btn[hidden]{display:none;}
- 
+  .btn:disabled{opacity:.32;cursor:default;}
+  .btn:disabled:hover{background:transparent;}
+
   .mode-toggle{
     display:flex;
     gap:3px;
@@ -112,7 +111,7 @@ Index · HTML
     opacity:1;
   }
   .mode-btn.active:hover{background:var(--gold-light);}
- 
+
   /* ---------- Page / Paper ---------- */
   .page-wrap{
     display:flex;
@@ -129,13 +128,13 @@ Index · HTML
   }
   @keyframes riseIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){ .paper{animation:none;} }
- 
+
   .corner{position:absolute;width:56px;height:56px;pointer-events:none;}
   .corner-tl{top:14px;left:14px;}
   .corner-tr{top:14px;right:14px;transform:scaleX(-1);}
   .corner-bl{bottom:14px;left:14px;transform:scaleY(-1);}
   .corner-br{bottom:14px;right:14px;transform:scale(-1,-1);}
- 
+
   /* ---------- Header ---------- */
   .doc-header{
     display:flex;
@@ -180,6 +179,7 @@ Index · HTML
     text-align:center;
     padding:8px;
   }
+  .photo-placeholder[hidden]{display:none !important;}
   .photo-placeholder svg{width:34px;height:34px;opacity:.6;}
   .photo-tools{
     display:none;
@@ -216,6 +216,34 @@ Index · HTML
   }
   .mini-link:hover{color:var(--maroon);}
   .photo-block{flex:none;width:128px;}
+
+  .save-indicator{
+    font-size:12px;
+    font-weight:700;
+    color:#8fd6a8;
+    opacity:0;
+    transition:opacity .3s ease;
+    white-space:nowrap;
+  }
+  .save-indicator.visible{opacity:1;}
+
+  .sec-caret{
+    flex:none;
+    width:20px;height:20px;
+    border:none;
+    background:transparent;
+    color:var(--maroon);
+    font-size:12px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    opacity:.75;
+    padding:0;
+  }
+  .sec-caret:hover{opacity:1;}
+  .biodata-section.collapsed .section-intro,
+  .biodata-section.collapsed .fields-list,
+  .biodata-section.collapsed .add-field-btn{display:none;}
+  .biodata-section.collapsed .section-head{margin-bottom:0;}
   .header-text{flex:1;min-width:0;}
   .eyebrow{
     margin:0 0 4px;
@@ -235,7 +263,7 @@ Index · HTML
     letter-spacing:0.5px;
     word-break:break-word;
   }
- 
+
   .top-divider{
     display:flex;
     align-items:center;
@@ -245,7 +273,7 @@ Index · HTML
   }
   .top-divider .line{flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);}
   .top-divider svg{flex:none;}
- 
+
   /* ---------- Sections ---------- */
   .biodata-section{
     margin-bottom:26px;
@@ -292,7 +320,7 @@ Index · HTML
   .sec-move[disabled]{opacity:.18;pointer-events:none;}
   .drag-handle{cursor:grab;font-size:13px;letter-spacing:-2px;}
   .drag-handle:active{cursor:grabbing;}
- 
+
   .section-intro{
     margin:0 0 12px;
     font-size:14.5px;
@@ -300,7 +328,7 @@ Index · HTML
     color:var(--ink);
   }
   .placeholder-text{color:var(--muted) !important;font-style:italic;}
- 
+
   .fields-list{display:flex;flex-direction:column;gap:7px;}
   .field-row{
     display:grid;
@@ -330,13 +358,13 @@ Index · HTML
   body.edit-mode .row-del{display:flex;}
   body.edit-mode .field-row:hover .row-del{opacity:.6;border-color:var(--muted);}
   .row-del:hover{opacity:1 !important;color:var(--maroon);border-color:var(--maroon);}
- 
+
   [contenteditable="true"]:focus{
     outline:1px dashed var(--gold);
     outline-offset:2px;
     background:rgba(184,134,60,0.08);
   }
- 
+
   .add-field-btn, .add-section-btn{
     margin-top:8px;
     font-family:'Mulish',sans-serif;
@@ -361,7 +389,7 @@ Index · HTML
     margin-top:10px;
   }
   .add-section-btn:hover{background:rgba(184,134,60,0.08);}
- 
+
   .hint{
     text-align:center;
     font-size:11.5px;
@@ -397,7 +425,7 @@ Index · HTML
     overflow:auto;
   }
   .changelog-empty{color:var(--muted);font-style:italic;}
- 
+
   @media (max-width:640px){
     .paper{padding:34px 22px 30px;}
     .doc-header{flex-direction:column;text-align:center;}
@@ -407,7 +435,7 @@ Index · HTML
     body.edit-mode .row-del{opacity:.6;}
     .toolbar{padding:12px 14px;}
   }
- 
+
   /* ---------- Print ---------- */
   @media print{
     @page{size:A4;margin:14mm;}
@@ -417,11 +445,14 @@ Index · HTML
     .paper{box-shadow:none;width:100%;padding:0;}
     .placeholder-text{display:none;}
     [contenteditable="true"]:focus{outline:none;background:none;}
+    .biodata-section.collapsed .section-intro{display:block !important;}
+    .biodata-section.collapsed .fields-list{display:flex !important;}
+    .sec-caret{display:none !important;}
   }
 </style>
 </head>
 <body class="view-mode">
- 
+
 <div class="toolbar no-print">
   <div class="toolbar-brand">Biodata <span>Builder</span></div>
   <div class="toolbar-actions">
@@ -429,6 +460,9 @@ Index · HTML
       <button class="mode-btn" id="viewOnlyBtn">View only</button>
       <button class="mode-btn" id="editModeBtn">Edit mode</button>
     </div>
+    <button class="btn" id="undoBtn" hidden title="Undo last change">Undo</button>
+    <button class="btn" id="redoBtn" hidden title="Redo">Redo</button>
+    <span class="save-indicator" id="saveIndicator">Saved ✓</span>
     <button class="btn" id="addSectionTopBtn" hidden>+ Add section</button>
     <button class="btn" id="saveBtn" hidden>Save as .biodata</button>
     <button class="btn" id="loadBtn">Open saved file</button>
@@ -438,14 +472,14 @@ Index · HTML
     <input type="file" id="loadInput" accept=".biodata,.json,application/json" hidden>
   </div>
 </div>
- 
+
 <div class="page-wrap">
   <div class="paper" id="paper">
     <svg class="corner corner-tl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-tr" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-bl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
     <svg class="corner corner-br" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
- 
+
     <header class="doc-header">
       <div class="photo-block">
         <div class="photo-frame no-print-border" id="photoFrame" title="Switch to Edit mode to add a photo">
@@ -457,9 +491,8 @@ Index · HTML
           <input type="file" id="photoInput" accept="image/*" hidden>
         </div>
         <div class="photo-tools no-print" id="photoTools">
-          <label>Zoom <input type="range" id="photoZoom" min="1" max="3" value="1" step="0.01"></label>
           <button type="button" class="mini-link" id="changePhotoBtn">Change photo</button>
-          <p class="photo-tools-hint">Drag the photo to reposition it, or pinch to zoom on touch screens. The photo always fills the frame.</p>
+          <p class="photo-tools-hint">Drag the photo to reposition it. Pinch on a touchscreen or trackpad to zoom (or Ctrl/⌘ + scroll with a mouse). It always fills the frame.</p>
         </div>
       </div>
       <div class="header-text">
@@ -467,27 +500,27 @@ Index · HTML
         <h1 class="name editable" id="nameField">Vinil Saxena</h1>
       </div>
     </header>
- 
+
     <div class="top-divider no-print-border">
       <div class="line"></div>
       <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" transform="rotate(45 8 8)" fill="var(--gold)"/></svg>
       <div class="line"></div>
     </div>
- 
+
     <div id="sectionsContainer"></div>
- 
+
     <button class="add-section-btn no-print" id="addSectionBottomBtn">+ Add new section</button>
     <p class="hint no-print" id="modeHint">View-only mode is active. Use Edit mode to make changes.</p>
   </div>
 </div>
- 
+
 <div class="panel no-print">
   <aside class="changelog" id="changelogPanel">
     <h2>Change log</h2>
     <ol class="changelog-list" id="changelogList"></ol>
   </aside>
 </div>
- 
+
 <script>
 (function(){
   const AUTH_CODE = '1042';
@@ -503,10 +536,18 @@ Index · HTML
   const toggleLogBtn = document.getElementById('toggleLogBtn');
   const changelogPanel = document.getElementById('changelogPanel');
   const changelogList = document.getElementById('changelogList');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const saveIndicator = document.getElementById('saveIndicator');
   let editMode = false;
   let changeLog = [];
   let dragSrcEl = null;
- 
+  let history = [];
+  let historyIndex = -1;
+  let isRestoring = false;
+  let snapshotTimer = null;
+  let saveIndicatorTimer = null;
+
   const defaultSections = [
     {
       title: 'Profile',
@@ -563,12 +604,84 @@ Index · HTML
       ]
     }
   ];
- 
+
   function addChange(message){
     changeLog.unshift({message, at: new Date().toISOString()});
     renderChangeLog();
+    showSavedIndicator();
+    scheduleSnapshot();
   }
- 
+
+  function showSavedIndicator(){
+    if(!editMode) return;
+    saveIndicator.classList.add('visible');
+    clearTimeout(saveIndicatorTimer);
+    saveIndicatorTimer = setTimeout(() => saveIndicator.classList.remove('visible'), 1600);
+  }
+
+  function getSnapshotData(){
+    const data = getDocumentData();
+    delete data.changeLog;
+    delete data.savedAt;
+    return data;
+  }
+
+  function scheduleSnapshot(){
+    if(isRestoring) return;
+    clearTimeout(snapshotTimer);
+    snapshotTimer = setTimeout(takeSnapshot, 500);
+  }
+
+  function takeSnapshot(){
+    const json = JSON.stringify(getSnapshotData());
+    if(history[historyIndex] === json) return;
+    history = history.slice(0, historyIndex + 1);
+    history.push(json);
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons(){
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+  }
+
+  function restoreState(data){
+    isRestoring = true;
+    document.getElementById('eyebrowField').textContent = data.eyebrow || 'Marriage Biodata';
+    document.getElementById('eyebrowField').dataset.isPlaceholder = data.eyebrow ? '' : '1';
+    document.getElementById('eyebrowField').classList.toggle('placeholder-text', !data.eyebrow);
+    document.getElementById('nameField').textContent = data.name || 'Full Name';
+    document.getElementById('nameField').dataset.isPlaceholder = data.name ? '' : '1';
+    document.getElementById('nameField').classList.toggle('placeholder-text', !data.name);
+    sectionsContainer.innerHTML = '';
+    (data.sections && data.sections.length ? data.sections : defaultSections)
+      .forEach(s => sectionsContainer.appendChild(createSection(s, false)));
+    if(data.photo && data.photo.src){
+      setPhotoSrc(data.photo.src, {zoom: data.photo.zoom, offsetX: data.photo.offsetX, offsetY: data.photo.offsetY});
+    } else {
+      clearPhoto();
+    }
+    setEditableState();
+    isRestoring = false;
+  }
+
+  function undo(){
+    if(historyIndex <= 0) return;
+    historyIndex--;
+    restoreState(JSON.parse(history[historyIndex]));
+    updateUndoRedoButtons();
+    addChange('Undid the last change');
+  }
+
+  function redo(){
+    if(historyIndex >= history.length - 1) return;
+    historyIndex++;
+    restoreState(JSON.parse(history[historyIndex]));
+    updateUndoRedoButtons();
+    addChange('Redid a change');
+  }
+
   function renderChangeLog(){
     changelogList.innerHTML = '';
     if(!changeLog.length){
@@ -584,7 +697,7 @@ Index · HTML
       changelogList.appendChild(item);
     });
   }
- 
+
   function refreshSectionControls(){
     const sections = Array.from(sectionsContainer.children);
     sections.forEach((sec, idx) => {
@@ -594,7 +707,7 @@ Index · HTML
       if(downBtn) downBtn.disabled = idx === sections.length - 1;
     });
   }
- 
+
   function setEditableState(){
     document.body.classList.toggle('edit-mode', editMode);
     document.body.classList.toggle('view-mode', !editMode);
@@ -606,13 +719,16 @@ Index · HTML
     addSectionTopBtn.hidden = !editMode;
     saveBtn.hidden = !editMode;
     toggleLogBtn.hidden = !editMode;
-    if(!editMode){ changelogPanel.classList.remove('open'); }
+    undoBtn.hidden = !editMode;
+    redoBtn.hidden = !editMode;
+    if(!editMode){ changelogPanel.classList.remove('open'); saveIndicator.classList.remove('visible'); }
     document.querySelectorAll('.editable').forEach(el => {
       el.contentEditable = editMode ? 'true' : 'false';
     });
     refreshSectionControls();
+    updateUndoRedoButtons();
   }
- 
+
   function attachPlaceholderBehavior(el, placeholder, multiline){
     function markPlaceholder(){
       el.textContent = placeholder;
@@ -647,7 +763,7 @@ Index · HTML
       });
     }
   }
- 
+
   function selectAllText(el){
     const range = document.createRange();
     range.selectNodeContents(el);
@@ -655,31 +771,31 @@ Index · HTML
     sel.removeAllRanges();
     sel.addRange(range);
   }
- 
+
   function makeSectionGlyph(){
     const wrap = document.createElement('div');
     wrap.innerHTML = '<svg class="section-glyph" width="40" height="12" viewBox="0 0 40 12"><line x1="0" y1="6" x2="14" y2="6" stroke="#B8863C" stroke-width="1"/><rect x="17" y="3" width="6" height="6" transform="rotate(45 20 6)" fill="#B8863C"/><line x1="26" y1="6" x2="40" y2="6" stroke="#B8863C" stroke-width="1"/></svg>';
     return wrap.firstElementChild;
   }
- 
+
   function createFieldRow(label, value, isNew){
     const row = document.createElement('div');
     row.className = 'field-row';
- 
+
     const labelEl = document.createElement('span');
     labelEl.className = 'field-label editable';
     labelEl.dataset.fieldName = 'field label';
     labelEl.textContent = label;
- 
+
     const sep = document.createElement('span');
     sep.className = 'field-sep';
     sep.textContent = ':';
- 
+
     const valueEl = document.createElement('span');
     valueEl.className = 'field-value editable';
     valueEl.dataset.fieldName = 'field details';
     valueEl.textContent = value;
- 
+
     const delBtn = document.createElement('button');
     delBtn.className = 'row-del no-print';
     delBtn.title = 'Remove field';
@@ -690,19 +806,19 @@ Index · HTML
       row.remove();
       addChange(secTitle ? `Removed a field from "${secTitle}"` : 'Removed a field');
     });
- 
+
     attachPlaceholderBehavior(labelEl, 'Label', false);
     attachPlaceholderBehavior(valueEl, 'Details', false);
- 
+
     row.append(labelEl, sep, valueEl, delBtn);
     setEditableState();
- 
+
     if(isNew){
       setTimeout(() => { labelEl.focus(); selectAllText(labelEl); }, 0);
     }
     return row;
   }
- 
+
   function moveSection(section, direction){
     if(!editMode) return;
     const secTitle = section.querySelector('.section-title').innerText.trim() || 'Untitled section';
@@ -716,14 +832,14 @@ Index · HTML
     refreshSectionControls();
     section.scrollIntoView({behavior:'smooth', block:'center'});
   }
- 
+
   function createSection(data, isNew){
     const section = document.createElement('section');
     section.className = 'biodata-section';
- 
+
     const head = document.createElement('div');
     head.className = 'section-head';
- 
+
     const dragHandle = document.createElement('span');
     dragHandle.className = 'sec-move drag-handle no-print';
     dragHandle.title = 'Drag to reorder';
@@ -740,9 +856,18 @@ Index · HTML
       section.classList.remove('dragging');
       document.querySelectorAll('.biodata-section.drag-over').forEach(s => s.classList.remove('drag-over'));
     });
- 
+
+    const caretBtn = document.createElement('button');
+    caretBtn.className = 'sec-caret';
+    caretBtn.title = 'Collapse / expand section';
+    caretBtn.innerHTML = '&#9662;';
+    caretBtn.addEventListener('click', () => {
+      section.classList.toggle('collapsed');
+      caretBtn.innerHTML = section.classList.contains('collapsed') ? '&#9656;' : '&#9662;';
+    });
+
     const glyph = makeSectionGlyph();
- 
+
     const titleEl = document.createElement('h2');
     titleEl.className = 'section-title editable';
     titleEl.dataset.fieldName = 'section title';
@@ -751,21 +876,21 @@ Index · HTML
       if(e.key === 'Enter'){ e.preventDefault(); titleEl.blur(); }
     });
     titleEl.addEventListener('input', () => addChange(`Renamed section to "${titleEl.innerText.trim() || 'Untitled'}"`));
- 
+
     const moveUpBtn = document.createElement('button');
     moveUpBtn.className = 'sec-move no-print';
     moveUpBtn.dataset.move = 'up';
     moveUpBtn.title = 'Move section up';
     moveUpBtn.innerHTML = '&uarr;';
     moveUpBtn.addEventListener('click', () => moveSection(section, -1));
- 
+
     const moveDownBtn = document.createElement('button');
     moveDownBtn.className = 'sec-move no-print';
     moveDownBtn.dataset.move = 'down';
     moveDownBtn.title = 'Move section down';
     moveDownBtn.innerHTML = '&darr;';
     moveDownBtn.addEventListener('click', () => moveSection(section, 1));
- 
+
     const secDel = document.createElement('button');
     secDel.className = 'sec-del no-print';
     secDel.title = 'Remove section';
@@ -775,9 +900,9 @@ Index · HTML
       addChange(`Removed section "${titleEl.innerText.trim() || 'Untitled'}"`);
       refreshSectionControls();
     });
- 
-    head.append(dragHandle, glyph, titleEl, moveUpBtn, moveDownBtn, secDel);
- 
+
+    head.append(caretBtn, dragHandle, glyph, titleEl, moveUpBtn, moveDownBtn, secDel);
+
     section.addEventListener('dragover', (e) => {
       if(!editMode || !dragSrcEl) return;
       e.preventDefault();
@@ -796,17 +921,17 @@ Index · HTML
       dragSrcEl = null;
       refreshSectionControls();
     });
- 
+
     const introEl = document.createElement('p');
     introEl.className = 'section-intro editable';
     introEl.dataset.fieldName = 'section note';
     introEl.textContent = data.intro || '';
     attachPlaceholderBehavior(introEl, 'Add a short note for this section (optional)', true);
- 
+
     const fieldsList = document.createElement('div');
     fieldsList.className = 'fields-list';
     (data.fields || []).forEach(f => fieldsList.appendChild(createFieldRow(f.label, f.value, false)));
- 
+
     const addFieldBtn = document.createElement('button');
     addFieldBtn.className = 'add-field-btn no-print';
     addFieldBtn.textContent = '+ Add field';
@@ -814,21 +939,21 @@ Index · HTML
       fieldsList.appendChild(createFieldRow('Label', 'Details', true));
       addChange(`Added a field to "${titleEl.innerText.trim() || 'Untitled'}"`);
     });
- 
+
     section.append(head, introEl, fieldsList, addFieldBtn);
     setEditableState();
- 
+
     if(isNew){
       setTimeout(() => { selectAllText(titleEl); titleEl.focus(); }, 0);
     }
     return section;
   }
- 
+
   function readText(el){
     if(!el || el.dataset.isPlaceholder === '1') return '';
     return el.innerText.trim();
   }
- 
+
   function getDocumentData(){
     return {
       version: FILE_VERSION,
@@ -852,7 +977,7 @@ Index · HTML
       changeLog
     };
   }
- 
+
   function loadDocumentData(data){
     document.getElementById('eyebrowField').textContent = data.eyebrow || 'Marriage Biodata';
     document.getElementById('nameField').textContent = data.name || 'Full Name';
@@ -867,8 +992,11 @@ Index · HTML
     changeLog = Array.isArray(data.changeLog) ? data.changeLog : [];
     renderChangeLog();
     setEditableState();
+    history = [];
+    historyIndex = -1;
+    takeSnapshot();
   }
- 
+
   function addNewSection(){
     if(!editMode) return;
     const section = createSection({title:'New Section', intro:'', fields:[{label:'Label', value:'Details'}]}, true);
@@ -877,11 +1005,11 @@ Index · HTML
     refreshSectionControls();
     section.scrollIntoView({behavior:'smooth', block:'center'});
   }
- 
+
   function escapeHtml(str){
     return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
- 
+
   function downloadBlob(content, filename, mime){
     const blob = new Blob(['\ufeff', content], {type: mime});
     const url = URL.createObjectURL(blob);
@@ -893,10 +1021,10 @@ Index · HTML
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
- 
+
   addSectionTopBtn.addEventListener('click', addNewSection);
   document.getElementById('addSectionBottomBtn').addEventListener('click', addNewSection);
- 
+
   editModeBtn.addEventListener('click', () => {
     if(editMode) return;
     const code = window.prompt('Enter the 4-digit edit code');
@@ -908,29 +1036,31 @@ Index · HTML
       window.alert('Incorrect code. View-only mode remains active.');
     }
   });
- 
+
   viewOnlyBtn.addEventListener('click', () => {
     if(!editMode) return;
     editMode = false;
     setEditableState();
     addChange('Exited edit mode');
   });
- 
+
+  undoBtn.addEventListener('click', undo);
+  redoBtn.addEventListener('click', redo);
+
   document.getElementById('nameField').dataset.fieldName = 'name';
   document.getElementById('eyebrowField').dataset.fieldName = 'document label';
   attachPlaceholderBehavior(document.getElementById('nameField'), 'Full Name', false);
   attachPlaceholderBehavior(document.getElementById('eyebrowField'), 'Marriage Biodata', false);
- 
+
   /* ---------- Photo: fills the frame, drag to pan, pinch / slider to zoom ---------- */
   const photoFrame = document.getElementById('photoFrame');
   const photoInput = document.getElementById('photoInput');
   const photoImg = document.getElementById('photoImg');
   const photoPlaceholder = document.getElementById('photoPlaceholder');
-  const photoZoom = document.getElementById('photoZoom');
   const changePhotoBtn = document.getElementById('changePhotoBtn');
- 
+
   let photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
- 
+
   function updatePhotoTransform(){
     if(!photoState.naturalW) return;
     const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
@@ -946,7 +1076,7 @@ Index · HTML
     photoImg.style.left = left + 'px';
     photoImg.style.top = top + 'px';
   }
- 
+
   function setPhotoSrc(src, saved){
     photoImg.onload = () => {
       const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
@@ -956,23 +1086,25 @@ Index · HTML
       photoState.zoom = (saved && saved.zoom) || 1;
       photoState.offsetX = (saved && saved.offsetX) || 0;
       photoState.offsetY = (saved && saved.offsetY) || 0;
-      photoZoom.value = photoState.zoom;
       photoImg.hidden = false;
+      photoImg.style.display = 'block';
       photoPlaceholder.hidden = true;
+      photoPlaceholder.style.display = 'none';
       updatePhotoTransform();
     };
     photoImg.src = src;
   }
- 
+
   function clearPhoto(){
     photoImg.onload = null;
     photoImg.removeAttribute('src');
     photoImg.hidden = true;
+    photoImg.style.display = 'none';
     photoPlaceholder.hidden = false;
-    photoZoom.value = 1;
+    photoPlaceholder.style.display = 'flex';
     photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
   }
- 
+
   photoFrame.addEventListener('click', () => {
     if(!editMode) return;
     if(!photoImg.hidden) return; // photo already present - use "Change photo" so drags don't reopen the file picker
@@ -989,12 +1121,18 @@ Index · HTML
     };
     reader.readAsDataURL(file);
   });
-  photoZoom.addEventListener('input', () => {
-    photoState.zoom = parseFloat(photoZoom.value);
+  let wheelZoomTimer = null;
+  photoImg.addEventListener('wheel', e => {
+    if(!editMode || photoImg.hidden) return;
+    e.preventDefault();
+    const delta = e.deltaY;
+    const factor = Math.exp(-delta * 0.0025);
+    photoState.zoom = Math.min(3, Math.max(1, photoState.zoom * factor));
     updatePhotoTransform();
-    addChange('Adjusted photo zoom');
-  });
- 
+    clearTimeout(wheelZoomTimer);
+    wheelZoomTimer = setTimeout(() => addChange('Adjusted photo zoom'), 300);
+  }, {passive:false});
+
   // drag / touch pan
   let dragging = false, dragStartX = 0, dragStartY = 0, startOffX = 0, startOffY = 0;
   function panStart(x, y){
@@ -1015,7 +1153,7 @@ Index · HTML
   photoImg.addEventListener('mousedown', e => { e.preventDefault(); panStart(e.clientX, e.clientY); });
   window.addEventListener('mousemove', e => panMove(e.clientX, e.clientY));
   window.addEventListener('mouseup', panEnd);
- 
+
   // pinch to zoom + single-finger pan on touch
   let pinchStartDist = 0, pinchStartZoom = 1;
   function touchDist(t0, t1){ return Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY); }
@@ -1035,7 +1173,6 @@ Index · HTML
       let newZoom = pinchStartZoom * (dist / pinchStartDist);
       newZoom = Math.min(3, Math.max(1, newZoom));
       photoState.zoom = newZoom;
-      photoZoom.value = newZoom;
       updatePhotoTransform();
     } else if(e.touches.length === 1){
       panMove(e.touches[0].clientX, e.touches[0].clientY);
@@ -1047,14 +1184,14 @@ Index · HTML
       panEnd();
     }
   });
- 
+
   saveBtn.addEventListener('click', () => {
     const data = getDocumentData();
     const name = data.name || 'Biodata';
     downloadBlob(JSON.stringify(data, null, 2), `${name.replace(/\s+/g,'_')}.biodata`, 'application/json');
     addChange('Saved a biodata file');
   });
- 
+
   loadBtn.addEventListener('click', () => loadInput.click());
   loadInput.addEventListener('change', () => {
     const file = loadInput.files && loadInput.files[0];
@@ -1072,15 +1209,15 @@ Index · HTML
     reader.readAsText(file);
     loadInput.value = '';
   });
- 
+
   toggleLogBtn.addEventListener('click', () => {
     changelogPanel.classList.toggle('open');
   });
- 
+
   document.getElementById('exportPdfBtn').addEventListener('click', () => {
     window.print();
   });
- 
+
   document.getElementById('exportDocBtn').addEventListener('click', () => {
     const data = getDocumentData();
     const name = data.name || 'Biodata';
@@ -1089,7 +1226,7 @@ Index · HTML
     if(data.photo.src){
       photoTag = `<img src="${data.photo.src}" width="150" height="188" style="border:3px solid #B8863C;padding:4px;object-fit:cover;" />`;
     }
- 
+
     let sectionsHtml = '';
     data.sections.forEach(sec => {
       let fieldsHtml = '';
@@ -1102,7 +1239,7 @@ Index · HTML
           </tr>`;
         }
       });
- 
+
       if(!sec.title && !sec.intro && !fieldsHtml) return;
       sectionsHtml += `
         <h2 style="color:#5B1220;border-bottom:1px solid #B8863C;padding-bottom:4px;font-family:Georgia,serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;margin:22px 0 8px;">${escapeHtml(sec.title)}</h2>
@@ -1110,7 +1247,7 @@ Index · HTML
         ${fieldsHtml ? `<table style="border-collapse:collapse;font-size:13px;">${fieldsHtml}</table>` : ''}
       `;
     });
- 
+
     const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8"><title>${escapeHtml(name)}</title></head>
     <body style="font-family:Calibri,Arial,sans-serif;color:#2A1B12;">
@@ -1123,13 +1260,14 @@ Index · HTML
       </tr></table>
       ${sectionsHtml}
     </body></html>`;
- 
+
     downloadBlob(fullHtml, name.replace(/\s+/g,'_') + '_Biodata.doc', 'application/msword');
   });
- 
+
   defaultSections.forEach(s => sectionsContainer.appendChild(createSection(s, false)));
   renderChangeLog();
   setEditableState();
+  takeSnapshot();
 })();
 </script>
 </body>
