@@ -13,4 +13,4 @@ A fully client-side biodata editor that can be deployed as a static site on Verc
 
 ## Deploy On Vercel
 
-Import this project into Vercel as a static frontend app. No server-side code or processing is required.
+Import this project into Vercel as a static frontend app. The deployment output directory is `public`, and no server-side code or processing is required.
