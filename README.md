@@ -20,23 +20,37 @@ vercel --prod              # promote to your production URL
 dashboard click **Add New → Project** and import that repo. Framework preset:
 "Other" (it's static + one serverless function, no build step needed).
 
-## 2. Connect a KV store (required for the Publish button)
+## 2. Connect a database (required for the Publish button)
 
-The Publish button needs somewhere to store the "latest version" so it's the
-same for every visitor. Vercel's KV store (hosted Redis) is the natural fit
-and takes two minutes:
+Vercel retired its old standalone "KV" product — storage now lives under
+**Marketplace Database Providers** in the Storage tab. We're using **Upstash**
+(Redis), since it's REST-based and needs zero connection-pooling setup in a
+serverless function — the easiest fit here.
 
-1. In your Vercel project, go to the **Storage** tab.
-2. Click **Create Database → KV**, give it a name, create it.
-3. On the "Connect to Project" step, select this project and the
+1. In your Vercel project, go to the **Storage** tab → **Browse Storage**.
+2. Under **Marketplace Database Providers**, click **Upstash**.
+3. Create a new database (type **Redis**). Free tier is plenty for this.
+4. On the "Connect to Project" step, select this project and the
    Production (and Preview, if you want) environment.
-4. Redeploy the project once (**Deployments → ⋯ → Redeploy**) so the new
-   environment variables (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, etc.) are
-   picked up. Vercel sets these automatically — you don't need to type
-   anything in yourself.
+5. Redeploy the project once (**Deployments → ⋯ → Redeploy**) so the new
+   environment variables are picked up. The integration sets these
+   automatically — you don't need to type anything in yourself. (Our code
+   checks for both `KV_REST_API_URL`/`KV_REST_API_TOKEN` and
+   `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN`, since Vercel's
+   integrations have used both names at different times — whichever Upstash
+   gives you will work.)
 
 That's it — `api/biodata.js` reads those environment variables through the
-`@vercel/kv` package automatically.
+`@upstash/redis` package automatically.
+
+**Alternatives**, if you'd rather use something else from that same Storage
+screen: **Redis** (the official Redis Cloud option) works too, but it gives
+you a `redis://` connection string instead of a REST API, which means
+swapping `@upstash/redis` for a client like `ioredis` and managing a
+persistent connection — a bit more setup in a serverless function. Neon or
+Supabase (Postgres) would also work, but you'd be storing a single JSON blob
+in a table instead of a natural key-value store — more moving parts than this
+app needs. Upstash is the simplest match for what we're doing here.
 
 ## How it works
 
