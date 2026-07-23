@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biodata Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --maroon:#5B1220;
+    --maroon-deep:#3E0C16;
+    --gold:#B8863C;
+    --gold-light:#D9B872;
+    --emerald:#1F4E42;
+    --ivory:#FBF6EA;
+    --cream:#F3E8D0;
+    --ink:#2A1B12;
+    --paper-shadow:rgba(53,34,20,0.22);
+    --muted:#8A7A63;
+    --toolbar:#203A34;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 18% 8%, rgba(217,184,114,0.22), transparent 28%),
+      radial-gradient(circle at 82% 18%, rgba(31,78,66,0.13), transparent 30%),
+      linear-gradient(180deg,#fffaf0 0%, var(--cream) 100%);
+    font-family:'Mulish',sans-serif;
+    color:var(--ink);
+  }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    position:sticky;
+    top:0;
+    z-index:50;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:14px 24px;
+    background:rgba(32,58,52,0.94);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid rgba(184,134,60,0.35);
+  }
+  .toolbar-brand{
+    display:none;
+    font-family:'Cormorant Garamond',serif;
+    font-size:22px;
+    font-weight:600;
+    color:var(--gold-light);
+    letter-spacing:0.5px;
+  }
+  body.edit-mode .toolbar-brand{display:block;}
+  .toolbar-brand span{color:#e8ddc7;font-weight:500;}
+  .toolbar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .btn{
+    font-family:'Mulish',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:0.3px;
+    padding:9px 16px;
+    border-radius:6px;
+    border:1px solid rgba(184,134,60,0.5);
+    background:transparent;
+    color:var(--gold-light);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, opacity .15s ease;
+  }
+  .btn:hover{background:rgba(184,134,60,0.15);}
+  .btn.primary{
+    background:var(--gold);
+    color:var(--maroon-deep);
+    border-color:var(--gold);
+  }
+  .btn.primary:hover{background:var(--gold-light);}
+  .btn[hidden]{display:none;}
+  .btn:disabled{opacity:.32;cursor:default;}
+  .btn:disabled:hover{background:transparent;}
+
+  .mode-toggle{
+    display:flex;
+    gap:3px;
+    background:rgba(0,0,0,0.22);
+    padding:4px;
+    border-radius:9px;
+    border:1px solid rgba(217,184,114,0.3);
+  }
+  .mode-btn{
+    border:none;
+    background:transparent;
+    color:#e8ddc7;
+    opacity:.7;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+  .mode-btn:hover{opacity:.9;}
+  .mode-btn.active{
+    background:var(--gold);
+    color:var(--maroon-deep);
+    opacity:1;
+  }
+  .mode-btn.active:hover{background:var(--gold-light);}
+
+  /* ---------- Page / Paper ---------- */
+  .page-wrap{
+    display:flex;
+    justify-content:center;
+    padding:40px 16px 90px;
+  }
+  .paper{
+    position:relative;
+    width:min(820px, 100%);
+    background:var(--ivory);
+    box-shadow:0 28px 55px -28px var(--paper-shadow);
+    padding:56px 60px 48px;
+    animation:riseIn .5s ease both;
+  }
+  @keyframes riseIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion: reduce){ .paper{animation:none;} }
+
+  .corner{position:absolute;width:56px;height:56px;pointer-events:none;}
+  .corner-tl{top:14px;left:14px;}
+  .corner-tr{top:14px;right:14px;transform:scaleX(-1);}
+  .corner-bl{bottom:14px;left:14px;transform:scaleY(-1);}
+  .corner-br{bottom:14px;right:14px;transform:scale(-1,-1);}
+
+  /* ---------- Header ---------- */
+  .doc-header{
+    display:flex;
+    align-items:center;
+    gap:28px;
+    margin-bottom:18px;
+  }
+  .photo-frame{
+    flex:none;
+    width:128px;
+    height:160px;
+    border:3px solid var(--gold);
+    padding:4px;
+    background:#fff;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  body.edit-mode .photo-frame{cursor:pointer;}
+  .photo-frame img{
+    position:absolute;
+    top:0;
+    left:0;
+    max-width:none;
+    max-height:none;
+    display:block;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+  body.edit-mode .photo-frame img{cursor:grab;}
+  .photo-frame img:active{cursor:grabbing;}
+  .photo-placeholder{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    color:var(--muted);
+    font-size:11px;
+    text-align:center;
+    padding:8px;
+  }
+  .photo-placeholder[hidden]{display:none !important;}
+  .photo-placeholder svg{width:34px;height:34px;opacity:.6;}
+  .photo-tools{
+    display:none;
+    flex-direction:column;
+    gap:8px;
+    margin-top:10px;
+    padding:10px;
+    border:1px dashed rgba(31,78,66,0.28);
+    border-radius:8px;
+    background:rgba(255,255,255,0.35);
+  }
+  body.edit-mode .photo-tools{display:flex;}
+  .photo-tools label{
+    display:grid;
+    grid-template-columns:44px 1fr;
+    align-items:center;
+    gap:8px;
+    color:var(--emerald);
+    font-size:12px;
+    font-weight:800;
+  }
+  .photo-tools input{width:100%;}
+  .photo-tools-hint{margin:0;font-size:10.5px;color:var(--muted);line-height:1.4;}
+  .mini-link{
+    align-self:flex-start;
+    background:none;
+    border:none;
+    color:var(--gold);
+    font-size:11px;
+    font-weight:800;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:0;
+  }
+  .mini-link:hover{color:var(--maroon);}
+  .photo-block{flex:none;width:128px;}
+
+  .save-indicator{
+    font-size:12px;
+    font-weight:700;
+    color:#8fd6a8;
+    opacity:0;
+    transition:opacity .3s ease;
+    white-space:nowrap;
+  }
+  .save-indicator.visible{opacity:1;}
+  .publish-status{
+    font-size:11.5px;
+    color:#cbd9d2;
+    white-space:nowrap;
+  }
+  .publish-status b{color:var(--gold-light);}
+
+  .sec-caret{
+    flex:none;
+    width:20px;height:20px;
+    border:none;
+    background:transparent;
+    color:var(--maroon);
+    font-size:12px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    opacity:.75;
+    padding:0;
+  }
+  .sec-caret:hover{opacity:1;}
+  .biodata-section.collapsed .section-intro,
+  .biodata-section.collapsed .fields-list,
+  .biodata-section.collapsed .add-field-btn{display:none;}
+  .biodata-section.collapsed .section-head{margin-bottom:0;}
+  .header-text{flex:1;min-width:0;}
+  .eyebrow{
+    margin:0 0 4px;
+    text-transform:uppercase;
+    letter-spacing:3px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--gold);
+  }
+  .name{
+    margin:0;
+    font-family:'Cormorant Garamond',serif;
+    font-weight:700;
+    font-size:44px;
+    line-height:1.1;
+    color:var(--maroon);
+    letter-spacing:0.5px;
+    word-break:break-word;
+  }
+
+  .top-divider{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:8px 0 30px;
+  }
+  .top-divider .line{flex:1;height:1px;background:linear-gradient(90deg, transparent, var(--gold) 20%, var(--gold) 80%, transparent);}
+  .top-divider svg{flex:none;}
+
+  /* ---------- Sections ---------- */
+  .biodata-section{
+    margin-bottom:26px;
+    break-inside:avoid;
+    page-break-inside:avoid;
+    transition:opacity .15s ease;
+  }
+  .biodata-section.dragging{opacity:.35;}
+  .biodata-section.drag-over{outline:2px dashed var(--gold);outline-offset:6px;border-radius:4px;}
+  .section-head{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-bottom:10px;
+  }
+  .section-glyph{flex:none;}
+  .section-title{
+    margin:0;
+    font-family:'Cormorant Garamond',serif;
+    font-weight:600;
+    font-size:20px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--maroon);
+    flex:1;
+    min-width:0;
+  }
+  .sec-move, .sec-del{
+    flex:none;
+    width:22px;height:22px;
+    border-radius:50%;
+    border:1px solid var(--muted);
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:12px;
+    line-height:1;
+    display:none;align-items:center;justify-content:center;
+    opacity:.55;
+    transition:opacity .15s, color .15s, border-color .15s;
+  }
+  body.edit-mode .sec-move, body.edit-mode .sec-del{display:flex;}
+  .sec-move:hover, .sec-del:hover{opacity:1;color:var(--maroon);border-color:var(--maroon);}
+  .sec-move[disabled]{opacity:.18;pointer-events:none;}
+  .drag-handle{cursor:grab;font-size:13px;letter-spacing:-2px;}
+  .drag-handle:active{cursor:grabbing;}
+
+  .section-intro{
+    margin:0 0 12px;
+    font-size:14.5px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  .placeholder-text{color:var(--muted) !important;font-style:italic;}
+
+  .fields-list{display:flex;flex-direction:column;gap:7px;}
+  .field-row{
+    display:grid;
+    grid-template-columns:200px 14px 1fr auto;
+    align-items:start;
+    gap:2px;
+    font-size:14.5px;
+    line-height:1.5;
+    transition:opacity .15s ease;
+  }
+  .field-row.dragging-row{opacity:.35;}
+  .field-row.drag-over-row{outline:2px dashed var(--gold);outline-offset:3px;border-radius:3px;}
+  .field-label{font-weight:700;color:var(--emerald);}
+  .field-sep{color:var(--muted);}
+  .field-value{color:var(--ink);}
+  .field-label,.field-value{padding:2px 4px;border-radius:3px;}
+  .row-controls{
+    display:none;
+    align-items:center;
+    gap:1px;
+    opacity:0;
+    transition:opacity .12s;
+  }
+  body.edit-mode .row-controls{display:flex;}
+  body.edit-mode .field-row:hover .row-controls{opacity:.65;}
+  .row-controls:hover{opacity:1 !important;}
+  .row-move, .row-del{
+    flex:none;
+    width:19px;height:19px;
+    border-radius:50%;
+    border:1px solid transparent;
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:11px;
+    padding:0;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .12s, color .12s, border-color .12s;
+  }
+  .row-move:hover, .row-del:hover{color:var(--maroon);border-color:var(--maroon);}
+  .row-move[disabled]{opacity:.2;pointer-events:none;}
+  .row-move.drag-handle{cursor:grab;font-size:11px;letter-spacing:-2px;}
+  .row-move.drag-handle:active{cursor:grabbing;}
+
+  [contenteditable="true"]:focus{
+    outline:1px dashed var(--gold);
+    outline-offset:2px;
+    background:rgba(184,134,60,0.08);
+  }
+
+  .add-field-btn, .add-section-btn{
+    margin-top:8px;
+    font-family:'Mulish',sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--emerald);
+    background:transparent;
+    border:1px dashed rgba(31,78,66,0.4);
+    border-radius:5px;
+    padding:6px 12px;
+    cursor:pointer;
+    display:none;
+  }
+  body.edit-mode .add-field-btn, body.edit-mode .add-section-btn{display:block;}
+  .add-field-btn:hover{background:rgba(31,78,66,0.06);}
+  .add-section-btn{
+    width:100%;
+    color:var(--gold);
+    border:1px dashed rgba(184,134,60,0.5);
+    padding:12px;
+    font-size:13px;
+    margin-top:10px;
+  }
+  .add-section-btn:hover{background:rgba(184,134,60,0.08);}
+
+  .hint{
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  .panel{
+    width:min(820px, 100%);
+    margin:0 auto 72px;
+    padding:0 16px;
+  }
+  .changelog{
+    display:none;
+    background:rgba(255,250,240,0.86);
+    border:1px solid rgba(184,134,60,0.32);
+    border-radius:12px;
+    box-shadow:0 18px 44px -30px rgba(0,0,0,0.32);
+    padding:18px 20px;
+  }
+  body.edit-mode .changelog.open{display:block;}
+  .changelog h2{
+    margin:0 0 10px;
+    font-family:'Cormorant Garamond',serif;
+    color:var(--maroon);
+  }
+  .changelog-list{
+    margin:0;
+    padding-left:20px;
+    color:var(--ink);
+    font-size:13px;
+    line-height:1.55;
+    max-height:220px;
+    overflow:auto;
+  }
+  .changelog-empty{color:var(--muted);font-style:italic;}
+
+  @media (max-width:640px){
+    .paper{padding:34px 22px 30px;}
+    .doc-header{flex-direction:column;text-align:center;}
+    .name{font-size:32px;}
+    .field-row{grid-template-columns:1fr;}
+    .field-sep{display:none;}
+    body.edit-mode .row-controls{opacity:.7;}
+    .toolbar{padding:12px 14px;}
+  }
+
+  /* ---------- Print ---------- */
+  @media print{
+    @page{size:A4;margin:12mm;}
+    html, body{margin:0;background:#fff;width:auto;}
+    .toolbar, .no-print, .panel{display:none !important;}
+    .page-wrap{padding:0;display:block;}
+    .paper{
+      box-shadow:none;
+      width:100%;
+      max-width:100%;
+      margin:0;
+      padding:22px 26px;
+      box-sizing:border-box;
+    }
+    .corner{display:none !important;}
+    .placeholder-text{display:none;}
+    [contenteditable="true"]:focus{outline:none;background:none;}
+    .biodata-section.collapsed .section-intro{display:block !important;}
+    .biodata-section.collapsed .fields-list{display:flex !important;}
+    .sec-caret{display:none !important;}
+  }
+</style>
+</head>
+<body class="view-mode">
+
+<div class="toolbar no-print">
+  <div class="toolbar-brand">Biodata <span>Builder</span></div>
+  <div class="toolbar-actions">
+    <div class="mode-toggle">
+      <button class="mode-btn" id="viewOnlyBtn">View only</button>
+      <button class="mode-btn" id="editModeBtn">Edit mode</button>
+    </div>
+    <button class="btn" id="undoBtn" hidden title="Undo last change">Undo</button>
+    <button class="btn" id="redoBtn" hidden title="Redo">Redo</button>
+    <span class="save-indicator" id="saveIndicator">Saved ✓</span>
+    <button class="btn" id="addSectionTopBtn" hidden>+ Add section</button>
+    <button class="btn primary" id="publishBtn" hidden title="Make this the version everyone sees">Publish update</button>
+    <span class="publish-status" id="publishStatus"></span>
+    <button class="btn" id="saveBtn" hidden>Download backup (.biodata)</button>
+    <button class="btn" id="loadBtn">Open backup file</button>
+    <button class="btn" id="toggleLogBtn" hidden>Change log</button>
+    <button class="btn" id="exportDocBtn">Export Word (.doc)</button>
+    <button class="btn primary" id="exportPdfBtn">Export PDF</button>
+    <input type="file" id="loadInput" accept=".biodata,.json,application/json" hidden>
+  </div>
+</div>
+
+<div class="page-wrap">
+  <div class="paper" id="paper">
+    <svg class="corner corner-tl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
+    <svg class="corner corner-tr" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
+    <svg class="corner corner-bl" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
+    <svg class="corner corner-br" viewBox="0 0 60 60"><path d="M4 40 C4 15, 15 4, 40 4" fill="none" stroke="var(--gold)" stroke-width="2"/><path d="M10 34 C10 20, 20 10, 34 10" fill="none" stroke="var(--gold)" stroke-width="1.2" opacity="0.55"/><circle cx="4" cy="46" r="3" fill="var(--gold)"/><circle cx="46" cy="4" r="3" fill="var(--gold)"/></svg>
+
+    <header class="doc-header">
+      <div class="photo-block">
+        <div class="photo-frame no-print-border" id="photoFrame" title="Switch to Edit mode to add a photo">
+          <img id="photoImg" alt="Photo" hidden>
+          <div class="photo-placeholder" id="photoPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+            <span>Add photo</span>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" hidden>
+        </div>
+        <div class="photo-tools no-print" id="photoTools">
+          <button type="button" class="mini-link" id="changePhotoBtn">Change photo</button>
+          <p class="photo-tools-hint">Drag the photo to reposition it. Pinch on a touchscreen or trackpad to zoom (or Ctrl/⌘ + scroll with a mouse). It always fills the frame.</p>
+        </div>
+      </div>
+      <div class="header-text">
+        <p class="eyebrow editable" id="eyebrowField">Marriage Biodata</p>
+        <h1 class="name editable" id="nameField">Vinil Saxena</h1>
+      </div>
+    </header>
+
+    <div class="top-divider no-print-border">
+      <div class="line"></div>
+      <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" transform="rotate(45 8 8)" fill="var(--gold)"/></svg>
+      <div class="line"></div>
+    </div>
+
+    <div id="sectionsContainer"></div>
+
+    <button class="add-section-btn no-print" id="addSectionBottomBtn">+ Add new section</button>
+    <p class="hint no-print" id="modeHint">View-only mode is active. Use Edit mode to make changes.</p>
+  </div>
+</div>
+
+<div class="panel no-print">
+  <aside class="changelog" id="changelogPanel">
+    <h2>Change log</h2>
+    <ol class="changelog-list" id="changelogList"></ol>
+  </aside>
+</div>
+
+<script>
+(function(){
+  const AUTH_CODE = '1042';
+  const FILE_VERSION = 2;
+  const sectionsContainer = document.getElementById('sectionsContainer');
+  const editModeBtn = document.getElementById('editModeBtn');
+  const viewOnlyBtn = document.getElementById('viewOnlyBtn');
+  const modeHint = document.getElementById('modeHint');
+  const addSectionTopBtn = document.getElementById('addSectionTopBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const loadBtn = document.getElementById('loadBtn');
+  const publishBtn = document.getElementById('publishBtn');
+  const publishStatus = document.getElementById('publishStatus');
+  const loadInput = document.getElementById('loadInput');
+  const toggleLogBtn = document.getElementById('toggleLogBtn');
+  const changelogPanel = document.getElementById('changelogPanel');
+  const changelogList = document.getElementById('changelogList');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+  const saveIndicator = document.getElementById('saveIndicator');
+  let editMode = false;
+  let changeLog = [];
+  let dragSrcEl = null;
+  let dragSrcRow = null;
+  let history = [];
+  let historyIndex = -1;
+  let isRestoring = false;
+  let snapshotTimer = null;
+  let saveIndicatorTimer = null;
+
+  const defaultSections = [
+    {
+      title: 'Profile',
+      intro: 'Vinil is a caring, kind-hearted and well-groomed professional - fun-loving, wise and open-minded, with a good sense of humor. He currently works as a Sales Development Manager at a well-reputed US MNC and is financially independent, with strong interpersonal skills. His interests include travelling, football and music. Looking for a match who is career-oriented, respectful of elders and warm towards family.',
+      fields: []
+    },
+    {
+      title: 'Education',
+      intro: '',
+      fields: [
+        {label:'B. Tech (Computer Science Engineering)', value:'Amity University, Noida (U.P.)'},
+        {label:'High School', value:'Delhi Public School - Rewari'}
+      ]
+    },
+    {
+      title: 'Current Job - Rippling',
+      intro: '',
+      fields: [
+        {label:'Designation', value:'Manager, Sales Development'},
+        {label:'Salary', value:'₹30 - 35 Lakh'},
+        {label:'Workplace', value:'Bangalore'}
+      ]
+    },
+    {
+      title: 'Personal Information',
+      intro: '',
+      fields: [
+        {label:'Caste', value:'Kayastha'},
+        {label:'Born', value:'January 1994'},
+        {label:'Place of Birth', value:'Gwalior, MP'},
+        {label:'Height', value:"6.0'"},
+        {label:'Diet', value:'Non-vegetarian'}
+      ]
+    },
+    {
+      title: 'Family Information',
+      intro: 'Upper middle-class family originally from Gwalior, with a strong base in Delhi NCR. Currently residing in Panaji, Goa.',
+      fields: [
+        {label:'Father', value:'Associate Vice President - Operations, US MNC (based in Goa)'},
+        {label:'Mother', value:'Homemaker'},
+        {label:'Younger Brother', value:'B.Tech (Mechanical Engineering), MBA (IMI, New Delhi), US MNC'},
+        {label:'Chachaji', value:'Product Development Head, reputed company in Noida'},
+        {label:'Mamaji', value:'Renowned Lawyer, Vidarbha region (near Nagpur)'},
+        {label:'Mausaji', value:'CA, Director at a Big 4 firm, Gurugram'},
+        {label:'Tauji', value:'Doctors, settled in the US, Delhi and Noida'}
+      ]
+    },
+    {
+      title: 'Contact',
+      intro: '',
+      fields: [
+        {label:'Phone', value:'9996205515 (Mother)'},
+        {label:'Email', value:'Sunilsaxena2915@gmail.com (Father)'}
+      ]
+    }
+  ];
+
+  function addChange(message){
+    changeLog.unshift({message, at: new Date().toISOString()});
+    renderChangeLog();
+    showSavedIndicator();
+    scheduleSnapshot();
+  }
+
+  function showSavedIndicator(){
+    if(!editMode) return;
+    saveIndicator.classList.add('visible');
+    clearTimeout(saveIndicatorTimer);
+    saveIndicatorTimer = setTimeout(() => saveIndicator.classList.remove('visible'), 1600);
+  }
+
+  function getSnapshotData(){
+    const data = getDocumentData();
+    delete data.changeLog;
+    delete data.savedAt;
+    return data;
+  }
+
+  function scheduleSnapshot(){
+    if(isRestoring) return;
+    clearTimeout(snapshotTimer);
+    snapshotTimer = setTimeout(takeSnapshot, 500);
+  }
+
+  function takeSnapshot(){
+    const json = JSON.stringify(getSnapshotData());
+    if(history[historyIndex] === json) return;
+    history = history.slice(0, historyIndex + 1);
+    history.push(json);
+    historyIndex = history.length - 1;
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons(){
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+  }
+
+  function restoreState(data){
+    isRestoring = true;
+    document.getElementById('eyebrowField').textContent = data.eyebrow || 'Marriage Biodata';
+    document.getElementById('eyebrowField').dataset.isPlaceholder = data.eyebrow ? '' : '1';
+    document.getElementById('eyebrowField').classList.toggle('placeholder-text', !data.eyebrow);
+    document.getElementById('nameField').textContent = data.name || 'Full Name';
+    document.getElementById('nameField').dataset.isPlaceholder = data.name ? '' : '1';
+    document.getElementById('nameField').classList.toggle('placeholder-text', !data.name);
+    sectionsContainer.innerHTML = '';
+    (data.sections && data.sections.length ? data.sections : defaultSections)
+      .forEach(s => sectionsContainer.appendChild(createSection(s, false)));
+    if(data.photo && data.photo.src){
+      setPhotoSrc(data.photo.src, {zoom: data.photo.zoom, offsetX: data.photo.offsetX, offsetY: data.photo.offsetY});
+    } else {
+      clearPhoto();
+    }
+    setEditableState();
+    isRestoring = false;
+  }
+
+  function undo(){
+    if(historyIndex <= 0) return;
+    historyIndex--;
+    restoreState(JSON.parse(history[historyIndex]));
+    updateUndoRedoButtons();
+    addChange('Undid the last change');
+  }
+
+  function redo(){
+    if(historyIndex >= history.length - 1) return;
+    historyIndex++;
+    restoreState(JSON.parse(history[historyIndex]));
+    updateUndoRedoButtons();
+    addChange('Redid a change');
+  }
+
+  function renderChangeLog(){
+    changelogList.innerHTML = '';
+    if(!changeLog.length){
+      const item = document.createElement('li');
+      item.className = 'changelog-empty';
+      item.textContent = 'No edits tracked yet.';
+      changelogList.appendChild(item);
+      return;
+    }
+    changeLog.forEach(entry => {
+      const item = document.createElement('li');
+      item.textContent = `${new Date(entry.at).toLocaleString()} - ${entry.message}`;
+      changelogList.appendChild(item);
+    });
+  }
+
+  function refreshSectionControls(){
+    const sections = Array.from(sectionsContainer.children);
+    sections.forEach((sec, idx) => {
+      const upBtn = sec.querySelector('.sec-move[data-move="up"]');
+      const downBtn = sec.querySelector('.sec-move[data-move="down"]');
+      if(upBtn) upBtn.disabled = idx === 0;
+      if(downBtn) downBtn.disabled = idx === sections.length - 1;
+    });
+  }
+
+  function refreshFieldControls(fieldsList){
+    if(!fieldsList) return;
+    const rows = Array.from(fieldsList.children);
+    rows.forEach((row, idx) => {
+      const upBtn = row.querySelector('.row-move[data-move="up"]');
+      const downBtn = row.querySelector('.row-move[data-move="down"]');
+      if(upBtn) upBtn.disabled = idx === 0;
+      if(downBtn) downBtn.disabled = idx === rows.length - 1;
+    });
+  }
+
+  function moveFieldRow(row, direction){
+    if(!editMode) return;
+    const fieldsList = row.parentElement;
+    if(!fieldsList) return;
+    const sec = row.closest('.biodata-section');
+    const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
+    if(direction === -1 && row.previousElementSibling){
+      fieldsList.insertBefore(row, row.previousElementSibling);
+      addChange(secTitle ? `Moved a field up in "${secTitle}"` : 'Moved a field up');
+    } else if(direction === 1 && row.nextElementSibling){
+      fieldsList.insertBefore(row.nextElementSibling, row);
+      addChange(secTitle ? `Moved a field down in "${secTitle}"` : 'Moved a field down');
+    }
+    refreshFieldControls(fieldsList);
+  }
+
+  function setEditableState(){
+    document.body.classList.toggle('edit-mode', editMode);
+    document.body.classList.toggle('view-mode', !editMode);
+    viewOnlyBtn.classList.toggle('active', !editMode);
+    editModeBtn.classList.toggle('active', editMode);
+    modeHint.textContent = editMode
+      ? 'Editing is active. Save your biodata file when you want to keep your progress.'
+      : 'View-only mode is active. Use Edit mode to make changes.';
+    addSectionTopBtn.hidden = !editMode;
+    saveBtn.hidden = !editMode;
+    publishBtn.hidden = !editMode;
+    toggleLogBtn.hidden = !editMode;
+    undoBtn.hidden = !editMode;
+    redoBtn.hidden = !editMode;
+    if(!editMode){ changelogPanel.classList.remove('open'); saveIndicator.classList.remove('visible'); }
+    document.querySelectorAll('.editable').forEach(el => {
+      el.contentEditable = editMode ? 'true' : 'false';
+    });
+    refreshSectionControls();
+    updateUndoRedoButtons();
+  }
+
+  function attachPlaceholderBehavior(el, placeholder, multiline){
+    function markPlaceholder(){
+      el.textContent = placeholder;
+      el.dataset.isPlaceholder = '1';
+      el.classList.add('placeholder-text');
+    }
+    if(el.textContent.trim() === ''){ markPlaceholder(); }
+    el.addEventListener('focus', function(){
+      if(!editMode){ el.blur(); return; }
+      if(el.dataset.isPlaceholder === '1'){
+        el.textContent = '';
+        el.dataset.isPlaceholder = '';
+        el.classList.remove('placeholder-text');
+      }
+    });
+    el.addEventListener('blur', function(){
+      if(el.textContent.trim() === ''){ markPlaceholder(); }
+    });
+    el.addEventListener('input', function(){
+      const label = el.dataset.fieldName || 'content';
+      const sec = el.closest('.biodata-section');
+      if(sec){
+        const secTitle = sec.querySelector('.section-title').innerText.trim() || 'Untitled section';
+        addChange(`Updated ${label} in "${secTitle}"`);
+      } else {
+        addChange(`Updated ${label}`);
+      }
+    });
+    if(!multiline){
+      el.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){ e.preventDefault(); el.blur(); }
+      });
+    }
+  }
+
+  function selectAllText(el){
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function makeSectionGlyph(){
+    const wrap = document.createElement('div');
+    wrap.innerHTML = '<svg class="section-glyph" width="40" height="12" viewBox="0 0 40 12"><line x1="0" y1="6" x2="14" y2="6" stroke="#B8863C" stroke-width="1"/><rect x="17" y="3" width="6" height="6" transform="rotate(45 20 6)" fill="#B8863C"/><line x1="26" y1="6" x2="40" y2="6" stroke="#B8863C" stroke-width="1"/></svg>';
+    return wrap.firstElementChild;
+  }
+
+  function createFieldRow(label, value, isNew){
+    const row = document.createElement('div');
+    row.className = 'field-row';
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'field-label editable';
+    labelEl.dataset.fieldName = 'field label';
+    labelEl.textContent = label;
+
+    const sep = document.createElement('span');
+    sep.className = 'field-sep';
+    sep.textContent = ':';
+
+    const valueEl = document.createElement('span');
+    valueEl.className = 'field-value editable';
+    valueEl.dataset.fieldName = 'field details';
+    valueEl.textContent = value;
+
+    const controls = document.createElement('div');
+    controls.className = 'row-controls no-print';
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'row-move drag-handle';
+    dragHandle.title = 'Drag to reorder';
+    dragHandle.innerHTML = '&#8942;&#8942;';
+    dragHandle.draggable = true;
+    dragHandle.addEventListener('dragstart', (e) => {
+      if(!editMode){ e.preventDefault(); return; }
+      dragSrcRow = row;
+      row.classList.add('dragging-row');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', ''); }catch(err){}
+    });
+    dragHandle.addEventListener('dragend', () => {
+      row.classList.remove('dragging-row');
+      document.querySelectorAll('.field-row.drag-over-row').forEach(r => r.classList.remove('drag-over-row'));
+    });
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'row-move';
+    upBtn.dataset.move = 'up';
+    upBtn.title = 'Move field up';
+    upBtn.innerHTML = '&uarr;';
+    upBtn.addEventListener('click', () => moveFieldRow(row, -1));
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'row-move';
+    downBtn.dataset.move = 'down';
+    downBtn.title = 'Move field down';
+    downBtn.innerHTML = '&darr;';
+    downBtn.addEventListener('click', () => moveFieldRow(row, 1));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'row-del';
+    delBtn.title = 'Remove field';
+    delBtn.innerHTML = '&times;';
+    delBtn.addEventListener('click', () => {
+      const fieldsList = row.parentElement;
+      const sec = row.closest('.biodata-section');
+      const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
+      row.remove();
+      addChange(secTitle ? `Removed a field from "${secTitle}"` : 'Removed a field');
+      refreshFieldControls(fieldsList);
+    });
+
+    controls.append(dragHandle, upBtn, downBtn, delBtn);
+
+    attachPlaceholderBehavior(labelEl, 'Label', false);
+    attachPlaceholderBehavior(valueEl, 'Details', false);
+
+    row.append(labelEl, sep, valueEl, controls);
+
+    row.addEventListener('dragover', (e) => {
+      if(!editMode || !dragSrcRow || dragSrcRow.parentElement !== row.parentElement) return;
+      e.preventDefault();
+      if(dragSrcRow !== row){ row.classList.add('drag-over-row'); }
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over-row'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.classList.remove('drag-over-row');
+      if(dragSrcRow && dragSrcRow !== row && dragSrcRow.parentElement === row.parentElement){
+        const fieldsList = row.parentElement;
+        const rect = row.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        fieldsList.insertBefore(dragSrcRow, before ? row : row.nextSibling);
+        const sec = row.closest('.biodata-section');
+        const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
+        addChange(secTitle ? `Reordered a field in "${secTitle}"` : 'Reordered a field');
+        refreshFieldControls(fieldsList);
+      }
+      dragSrcRow = null;
+    });
+
+    if(isNew){
+      setTimeout(() => { labelEl.focus(); selectAllText(labelEl); }, 0);
+    }
+    return row;
+  }
+
+  function moveSection(section, direction){
+    if(!editMode) return;
+    const secTitle = section.querySelector('.section-title').innerText.trim() || 'Untitled section';
+    if(direction === -1 && section.previousElementSibling){
+      sectionsContainer.insertBefore(section, section.previousElementSibling);
+      addChange(`Moved section "${secTitle}" up`);
+    } else if(direction === 1 && section.nextElementSibling){
+      sectionsContainer.insertBefore(section.nextElementSibling, section);
+      addChange(`Moved section "${secTitle}" down`);
+    }
+    refreshSectionControls();
+    section.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function createSection(data, isNew){
+    const section = document.createElement('section');
+    section.className = 'biodata-section';
+
+    const head = document.createElement('div');
+    head.className = 'section-head';
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'sec-move drag-handle no-print';
+    dragHandle.title = 'Drag to reorder';
+    dragHandle.innerHTML = '&#8942;&#8942;';
+    dragHandle.draggable = true;
+    dragHandle.addEventListener('dragstart', (e) => {
+      if(!editMode){ e.preventDefault(); return; }
+      dragSrcEl = section;
+      section.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', ''); }catch(err){}
+    });
+    dragHandle.addEventListener('dragend', () => {
+      section.classList.remove('dragging');
+      document.querySelectorAll('.biodata-section.drag-over').forEach(s => s.classList.remove('drag-over'));
+    });
+
+    const caretBtn = document.createElement('button');
+    caretBtn.className = 'sec-caret';
+    caretBtn.title = 'Collapse / expand section';
+    caretBtn.innerHTML = '&#9662;';
+    caretBtn.addEventListener('click', () => {
+      section.classList.toggle('collapsed');
+      caretBtn.innerHTML = section.classList.contains('collapsed') ? '&#9656;' : '&#9662;';
+    });
+
+    const glyph = makeSectionGlyph();
+
+    const titleEl = document.createElement('h2');
+    titleEl.className = 'section-title editable';
+    titleEl.dataset.fieldName = 'section title';
+    titleEl.textContent = data.title;
+    titleEl.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); titleEl.blur(); }
+    });
+    titleEl.addEventListener('input', () => addChange(`Renamed section to "${titleEl.innerText.trim() || 'Untitled'}"`));
+
+    const moveUpBtn = document.createElement('button');
+    moveUpBtn.className = 'sec-move no-print';
+    moveUpBtn.dataset.move = 'up';
+    moveUpBtn.title = 'Move section up';
+    moveUpBtn.innerHTML = '&uarr;';
+    moveUpBtn.addEventListener('click', () => moveSection(section, -1));
+
+    const moveDownBtn = document.createElement('button');
+    moveDownBtn.className = 'sec-move no-print';
+    moveDownBtn.dataset.move = 'down';
+    moveDownBtn.title = 'Move section down';
+    moveDownBtn.innerHTML = '&darr;';
+    moveDownBtn.addEventListener('click', () => moveSection(section, 1));
+
+    const secDel = document.createElement('button');
+    secDel.className = 'sec-del no-print';
+    secDel.title = 'Remove section';
+    secDel.innerHTML = '&times;';
+    secDel.addEventListener('click', () => {
+      section.remove();
+      addChange(`Removed section "${titleEl.innerText.trim() || 'Untitled'}"`);
+      refreshSectionControls();
+    });
+
+    head.append(caretBtn, dragHandle, glyph, titleEl, moveUpBtn, moveDownBtn, secDel);
+
+    section.addEventListener('dragover', (e) => {
+      if(!editMode || !dragSrcEl) return;
+      e.preventDefault();
+      if(dragSrcEl !== section){ section.classList.add('drag-over'); }
+    });
+    section.addEventListener('dragleave', () => section.classList.remove('drag-over'));
+    section.addEventListener('drop', (e) => {
+      e.preventDefault();
+      section.classList.remove('drag-over');
+      if(dragSrcEl && dragSrcEl !== section){
+        const rect = section.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        sectionsContainer.insertBefore(dragSrcEl, before ? section : section.nextSibling);
+        addChange(`Reordered section "${dragSrcEl.querySelector('.section-title').innerText.trim() || 'Untitled section'}"`);
+      }
+      dragSrcEl = null;
+      refreshSectionControls();
+    });
+
+    const introEl = document.createElement('p');
+    introEl.className = 'section-intro editable';
+    introEl.dataset.fieldName = 'section note';
+    introEl.textContent = data.intro || '';
+    attachPlaceholderBehavior(introEl, 'Add a short note for this section (optional)', true);
+
+    const fieldsList = document.createElement('div');
+    fieldsList.className = 'fields-list';
+    (data.fields || []).forEach(f => fieldsList.appendChild(createFieldRow(f.label, f.value, false)));
+    refreshFieldControls(fieldsList);
+
+    const addFieldBtn = document.createElement('button');
+    addFieldBtn.className = 'add-field-btn no-print';
+    addFieldBtn.textContent = '+ Add field';
+    addFieldBtn.addEventListener('click', () => {
+      fieldsList.appendChild(createFieldRow('Label', 'Details', true));
+      addChange(`Added a field to "${titleEl.innerText.trim() || 'Untitled'}"`);
+      setEditableState();
+      refreshFieldControls(fieldsList);
+    });
+
+    section.append(head, introEl, fieldsList, addFieldBtn);
+    setEditableState();
+
+    if(isNew){
+      setTimeout(() => { selectAllText(titleEl); titleEl.focus(); }, 0);
+    }
+    return section;
+  }
+
+  function readText(el){
+    if(!el || el.dataset.isPlaceholder === '1') return '';
+    return el.innerText.trim();
+  }
+
+  function getDocumentData(){
+    return {
+      version: FILE_VERSION,
+      savedAt: new Date().toISOString(),
+      eyebrow: readText(document.getElementById('eyebrowField')),
+      name: readText(document.getElementById('nameField')),
+      photo: {
+        src: photoImg.hidden ? '' : photoImg.src,
+        zoom: photoState.zoom,
+        offsetX: photoState.offsetX,
+        offsetY: photoState.offsetY
+      },
+      sections: Array.from(document.querySelectorAll('.biodata-section')).map(sec => ({
+        title: readText(sec.querySelector('.section-title')),
+        intro: readText(sec.querySelector('.section-intro')),
+        fields: Array.from(sec.querySelectorAll('.field-row')).map(row => ({
+          label: readText(row.querySelector('.field-label')),
+          value: readText(row.querySelector('.field-value'))
+        })).filter(field => field.label || field.value)
+      })),
+      changeLog
+    };
+  }
+
+  function loadDocumentData(data){
+    document.getElementById('eyebrowField').textContent = data.eyebrow || 'Marriage Biodata';
+    document.getElementById('nameField').textContent = data.name || 'Full Name';
+    sectionsContainer.innerHTML = '';
+    (data.sections && data.sections.length ? data.sections : defaultSections)
+      .forEach(s => sectionsContainer.appendChild(createSection(s, false)));
+    if(data.photo && data.photo.src){
+      setPhotoSrc(data.photo.src, {zoom: data.photo.zoom, offsetX: data.photo.offsetX, offsetY: data.photo.offsetY});
+    } else {
+      clearPhoto();
+    }
+    changeLog = Array.isArray(data.changeLog) ? data.changeLog : [];
+    renderChangeLog();
+    setEditableState();
+    history = [];
+    historyIndex = -1;
+    takeSnapshot();
+  }
+
+  function addNewSection(){
+    if(!editMode) return;
+    const section = createSection({title:'New Section', intro:'', fields:[{label:'Label', value:'Details'}]}, true);
+    sectionsContainer.appendChild(section);
+    setEditableState();
+    addChange('Added a new section "New Section"');
+    refreshSectionControls();
+    section.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function escapeHtml(str){
+    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function downloadBlob(content, filename, mime){
+    const blob = new Blob(['\ufeff', content], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  addSectionTopBtn.addEventListener('click', addNewSection);
+  document.getElementById('addSectionBottomBtn').addEventListener('click', addNewSection);
+
+  editModeBtn.addEventListener('click', () => {
+    if(editMode) return;
+    const code = window.prompt('Enter the 4-digit edit code');
+    if(code === AUTH_CODE){
+      editMode = true;
+      setEditableState();
+      addChange('Entered edit mode');
+    } else if(code !== null) {
+      window.alert('Incorrect code. View-only mode remains active.');
+    }
+  });
+
+  viewOnlyBtn.addEventListener('click', () => {
+    if(!editMode) return;
+    editMode = false;
+    setEditableState();
+    addChange('Exited edit mode');
+  });
+
+  undoBtn.addEventListener('click', undo);
+  redoBtn.addEventListener('click', redo);
+
+  document.getElementById('nameField').dataset.fieldName = 'name';
+  document.getElementById('eyebrowField').dataset.fieldName = 'document label';
+  attachPlaceholderBehavior(document.getElementById('nameField'), 'Full Name', false);
+  attachPlaceholderBehavior(document.getElementById('eyebrowField'), 'Marriage Biodata', false);
+
+  /* ---------- Photo: fills the frame, drag to pan, pinch / slider to zoom ---------- */
+  const photoFrame = document.getElementById('photoFrame');
+  const photoInput = document.getElementById('photoInput');
+  const photoImg = document.getElementById('photoImg');
+  const photoPlaceholder = document.getElementById('photoPlaceholder');
+  const changePhotoBtn = document.getElementById('changePhotoBtn');
+
+  let photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
+
+  function updatePhotoTransform(){
+    if(!photoState.naturalW) return;
+    const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
+    const scale = photoState.baseScale * photoState.zoom;
+    const w = photoState.naturalW * scale;
+    const h = photoState.naturalH * scale;
+    let left = (frameW - w) / 2 + photoState.offsetX;
+    let top = (frameH - h) / 2 + photoState.offsetY;
+    left = Math.min(0, Math.max(frameW - w, left));
+    top = Math.min(0, Math.max(frameH - h, top));
+    photoImg.style.width = w + 'px';
+    photoImg.style.height = h + 'px';
+    photoImg.style.left = left + 'px';
+    photoImg.style.top = top + 'px';
+  }
+
+  function setPhotoSrc(src, saved){
+    photoImg.onload = () => {
+      const frameW = photoFrame.clientWidth, frameH = photoFrame.clientHeight;
+      photoState.naturalW = photoImg.naturalWidth;
+      photoState.naturalH = photoImg.naturalHeight;
+      photoState.baseScale = Math.max(frameW / photoState.naturalW, frameH / photoState.naturalH);
+      photoState.zoom = (saved && saved.zoom) || 1;
+      photoState.offsetX = (saved && saved.offsetX) || 0;
+      photoState.offsetY = (saved && saved.offsetY) || 0;
+      photoImg.hidden = false;
+      photoImg.style.display = 'block';
+      photoPlaceholder.hidden = true;
+      photoPlaceholder.style.display = 'none';
+      updatePhotoTransform();
+    };
+    photoImg.src = src;
+  }
+
+  function clearPhoto(){
+    photoImg.onload = null;
+    photoImg.removeAttribute('src');
+    photoImg.hidden = true;
+    photoImg.style.display = 'none';
+    photoPlaceholder.hidden = false;
+    photoPlaceholder.style.display = 'flex';
+    photoState = {naturalW:0, naturalH:0, baseScale:1, zoom:1, offsetX:0, offsetY:0};
+  }
+
+  photoFrame.addEventListener('click', () => {
+    if(!editMode) return;
+    if(!photoImg.hidden) return; // photo already present - use "Change photo" so drags don't reopen the file picker
+    photoInput.click();
+  });
+  changePhotoBtn.addEventListener('click', () => photoInput.click());
+  photoInput.addEventListener('change', () => {
+    const file = photoInput.files && photoInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      setPhotoSrc(e.target.result, null);
+      addChange('Updated profile photo');
+    };
+    reader.readAsDataURL(file);
+  });
+  let wheelZoomTimer = null;
+  photoImg.addEventListener('wheel', e => {
+    if(!editMode || photoImg.hidden) return;
+    e.preventDefault();
+    const delta = e.deltaY;
+    const factor = Math.exp(-delta * 0.0025);
+    photoState.zoom = Math.min(3, Math.max(1, photoState.zoom * factor));
+    updatePhotoTransform();
+    clearTimeout(wheelZoomTimer);
+    wheelZoomTimer = setTimeout(() => addChange('Adjusted photo zoom'), 300);
+  }, {passive:false});
+
+  // drag / touch pan
+  let dragging = false, dragStartX = 0, dragStartY = 0, startOffX = 0, startOffY = 0;
+  function panStart(x, y){
+    if(!editMode || photoImg.hidden) return;
+    dragging = true;
+    dragStartX = x; dragStartY = y;
+    startOffX = photoState.offsetX; startOffY = photoState.offsetY;
+  }
+  function panMove(x, y){
+    if(!dragging) return;
+    photoState.offsetX = startOffX + (x - dragStartX);
+    photoState.offsetY = startOffY + (y - dragStartY);
+    updatePhotoTransform();
+  }
+  function panEnd(){
+    if(dragging){ dragging = false; addChange('Repositioned photo'); }
+  }
+  photoImg.addEventListener('mousedown', e => { e.preventDefault(); panStart(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', e => panMove(e.clientX, e.clientY));
+  window.addEventListener('mouseup', panEnd);
+
+  // pinch to zoom + single-finger pan on touch
+  let pinchStartDist = 0, pinchStartZoom = 1;
+  function touchDist(t0, t1){ return Math.hypot(t1.clientX - t0.clientX, t1.clientY - t0.clientY); }
+  photoImg.addEventListener('touchstart', e => {
+    if(!editMode) return;
+    if(e.touches.length === 2){
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartZoom = photoState.zoom;
+      dragging = false;
+    } else if(e.touches.length === 1){
+      panStart(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, {passive:true});
+  window.addEventListener('touchmove', e => {
+    if(e.touches.length === 2 && pinchStartDist){
+      const dist = touchDist(e.touches[0], e.touches[1]);
+      let newZoom = pinchStartZoom * (dist / pinchStartDist);
+      newZoom = Math.min(3, Math.max(1, newZoom));
+      photoState.zoom = newZoom;
+      updatePhotoTransform();
+    } else if(e.touches.length === 1){
+      panMove(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, {passive:true});
+  window.addEventListener('touchend', e => {
+    if(e.touches.length === 0){
+      if(pinchStartDist){ pinchStartDist = 0; addChange('Adjusted photo zoom'); }
+      panEnd();
+    }
+  });
+
+  saveBtn.addEventListener('click', () => {
+    const data = getDocumentData();
+    const name = data.name || 'Biodata';
+    downloadBlob(JSON.stringify(data, null, 2), `${name.replace(/\s+/g,'_')}.biodata`, 'application/json');
+    addChange('Downloaded a local backup file');
+  });
+
+  let apiAvailable = null; // null = unknown yet, true/false once we've checked
+
+  async function fetchPublished(){
+    try{
+      const res = await fetch('/api/biodata', {cache:'no-store'});
+      if(!res.ok && res.status !== 404){ apiAvailable = false; return null; }
+      apiAvailable = true;
+      if(res.status === 404) return null; // API reachable, nothing published yet
+      const data = await res.json();
+      return (data && data.sections) ? data : null;
+    }catch(err){
+      apiAvailable = false;
+      return null; // no backend reachable (e.g. running outside Vercel) - fall back to local behaviour
+    }
+  }
+
+  function formatPublishStatus(data){
+    if(apiAvailable === false){
+      return 'Shared publishing needs the Vercel API (see README) - not connected here';
+    }
+    if(!data || !data.shareVersion){
+      return 'Not published yet';
+    }
+    const when = data.publishedAt ? new Date(data.publishedAt).toLocaleString() : '';
+    return `<b>Version ${data.shareVersion}</b> published ${when}`;
+  }
+
+  function updatePublishStatus(data){
+    publishStatus.innerHTML = formatPublishStatus(data);
+  }
+
+  publishBtn.addEventListener('click', async () => {
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Publishing…';
+    try{
+      const data = getDocumentData();
+      const res = await fetch('/api/biodata', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      if(!res.ok){
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `Server responded with ${res.status}`);
+      }
+      const saved = await res.json();
+      apiAvailable = true;
+      updatePublishStatus(saved);
+      addChange(`Published version ${saved.shareVersion} for everyone`);
+    }catch(err){
+      apiAvailable = false;
+      updatePublishStatus(null);
+      window.alert('Publishing failed: ' + err.message + '\n\nThis feature needs the app deployed on Vercel with a KV store connected (see README.md). Locally you can still use "Download backup".');
+    }finally{
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Publish update';
+    }
+  });
+
+  loadBtn.addEventListener('click', () => loadInput.click());
+  loadInput.addEventListener('change', () => {
+    const file = loadInput.files && loadInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        loadDocumentData(data);
+        addChange(`Opened backup file "${file.name}"`);
+      } catch (error) {
+        window.alert('This file could not be opened. Please choose a valid .biodata file.');
+      }
+    };
+    reader.readAsText(file);
+    loadInput.value = '';
+  });
+
+  toggleLogBtn.addEventListener('click', () => {
+    changelogPanel.classList.toggle('open');
+  });
+
+  document.getElementById('exportPdfBtn').addEventListener('click', () => {
+    window.print();
+  });
+
+  document.getElementById('exportDocBtn').addEventListener('click', () => {
+    const data = getDocumentData();
+    const name = data.name || 'Biodata';
+    const eyebrow = data.eyebrow || '';
+    let photoTag = '';
+    if(data.photo.src){
+      photoTag = `<img src="${data.photo.src}" width="150" height="188" style="border:3px solid #B8863C;padding:4px;object-fit:cover;" />`;
+    }
+
+    let sectionsHtml = '';
+    data.sections.forEach(sec => {
+      let fieldsHtml = '';
+      sec.fields.forEach(field => {
+        if(field.label || field.value){
+          fieldsHtml += `<tr>
+            <td style="padding:4px 10px 4px 0;font-weight:bold;color:#1F4E42;vertical-align:top;white-space:nowrap;">${escapeHtml(field.label)}</td>
+            <td style="padding:4px 0;vertical-align:top;">:</td>
+            <td style="padding:4px 0 4px 10px;vertical-align:top;">${escapeHtml(field.value)}</td>
+          </tr>`;
+        }
+      });
+
+      if(!sec.title && !sec.intro && !fieldsHtml) return;
+      sectionsHtml += `
+        <h2 style="color:#5B1220;border-bottom:1px solid #B8863C;padding-bottom:4px;font-family:Georgia,serif;font-size:16px;letter-spacing:1px;text-transform:uppercase;margin:22px 0 8px;">${escapeHtml(sec.title)}</h2>
+        ${sec.intro ? `<p style="margin:0 0 10px;font-size:13px;line-height:1.6;">${escapeHtml(sec.intro).replace(/\n/g,'<br>')}</p>` : ''}
+        ${fieldsHtml ? `<table style="border-collapse:collapse;font-size:13px;">${fieldsHtml}</table>` : ''}
+      `;
+    });
+
+    const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"><title>${escapeHtml(name)}</title></head>
+    <body style="font-family:Calibri,Arial,sans-serif;color:#2A1B12;">
+      <table style="width:100%;margin-bottom:10px;"><tr>
+        ${photoTag ? `<td style="width:160px;vertical-align:top;">${photoTag}</td>` : ''}
+        <td style="vertical-align:middle;padding-left:20px;">
+          <p style="text-transform:uppercase;letter-spacing:2px;color:#B8863C;font-size:11px;margin:0;">${escapeHtml(eyebrow)}</p>
+          <h1 style="font-family:Georgia,serif;color:#5B1220;margin:4px 0;font-size:30px;">${escapeHtml(name)}</h1>
+        </td>
+      </tr></table>
+      ${sectionsHtml}
+    </body></html>`;
+
+    downloadBlob(fullHtml, name.replace(/\s+/g,'_') + '_Biodata.doc', 'application/msword');
+  });
+
+  async function init(){
+    const shared = await fetchPublished();
+    if(shared && shared.sections && shared.sections.length){
+      loadDocumentData(shared);
+    } else {
+      defaultSections.forEach(s => sectionsContainer.appendChild(createSection(s, false)));
+      renderChangeLog();
+      setEditableState();
+      takeSnapshot();
+    }
+    updatePublishStatus(shared);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
