@@ -226,6 +226,12 @@
     white-space:nowrap;
   }
   .save-indicator.visible{opacity:1;}
+  .publish-status{
+    font-size:11.5px;
+    color:#cbd9d2;
+    white-space:nowrap;
+  }
+  .publish-status b{color:var(--gold-light);}
 
   .sec-caret{
     flex:none;
@@ -332,32 +338,46 @@
   .fields-list{display:flex;flex-direction:column;gap:7px;}
   .field-row{
     display:grid;
-    grid-template-columns:200px 14px 1fr 22px;
+    grid-template-columns:200px 14px 1fr auto;
     align-items:start;
     gap:2px;
     font-size:14.5px;
     line-height:1.5;
+    transition:opacity .15s ease;
   }
+  .field-row.dragging-row{opacity:.35;}
+  .field-row.drag-over-row{outline:2px dashed var(--gold);outline-offset:3px;border-radius:3px;}
   .field-label{font-weight:700;color:var(--emerald);}
   .field-sep{color:var(--muted);}
   .field-value{color:var(--ink);}
   .field-label,.field-value{padding:2px 4px;border-radius:3px;}
-  .row-del{
+  .row-controls{
+    display:none;
+    align-items:center;
+    gap:1px;
+    opacity:0;
+    transition:opacity .12s;
+  }
+  body.edit-mode .row-controls{display:flex;}
+  body.edit-mode .field-row:hover .row-controls{opacity:.65;}
+  .row-controls:hover{opacity:1 !important;}
+  .row-move, .row-del{
     flex:none;
-    width:20px;height:20px;
+    width:19px;height:19px;
     border-radius:50%;
     border:1px solid transparent;
     background:transparent;
     color:var(--muted);
     cursor:pointer;
-    font-size:12px;
-    opacity:0;
-    display:none;align-items:center;justify-content:center;
-    transition:opacity .12s;
+    font-size:11px;
+    padding:0;
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .12s, color .12s, border-color .12s;
   }
-  body.edit-mode .row-del{display:flex;}
-  body.edit-mode .field-row:hover .row-del{opacity:.6;border-color:var(--muted);}
-  .row-del:hover{opacity:1 !important;color:var(--maroon);border-color:var(--maroon);}
+  .row-move:hover, .row-del:hover{color:var(--maroon);border-color:var(--maroon);}
+  .row-move[disabled]{opacity:.2;pointer-events:none;}
+  .row-move.drag-handle{cursor:grab;font-size:11px;letter-spacing:-2px;}
+  .row-move.drag-handle:active{cursor:grabbing;}
 
   [contenteditable="true"]:focus{
     outline:1px dashed var(--gold);
@@ -432,7 +452,7 @@
     .name{font-size:32px;}
     .field-row{grid-template-columns:1fr;}
     .field-sep{display:none;}
-    body.edit-mode .row-del{opacity:.6;}
+    body.edit-mode .row-controls{opacity:.7;}
     .toolbar{padding:12px 14px;}
   }
 
@@ -464,8 +484,10 @@
     <button class="btn" id="redoBtn" hidden title="Redo">Redo</button>
     <span class="save-indicator" id="saveIndicator">Saved ✓</span>
     <button class="btn" id="addSectionTopBtn" hidden>+ Add section</button>
-    <button class="btn" id="saveBtn" hidden>Save as .biodata</button>
-    <button class="btn" id="loadBtn">Open saved file</button>
+    <button class="btn primary" id="publishBtn" hidden title="Make this the version everyone sees">Publish update</button>
+    <span class="publish-status" id="publishStatus"></span>
+    <button class="btn" id="saveBtn" hidden>Download backup (.biodata)</button>
+    <button class="btn" id="loadBtn">Open backup file</button>
     <button class="btn" id="toggleLogBtn" hidden>Change log</button>
     <button class="btn" id="exportDocBtn">Export Word (.doc)</button>
     <button class="btn primary" id="exportPdfBtn">Export PDF</button>
@@ -532,6 +554,9 @@
   const addSectionTopBtn = document.getElementById('addSectionTopBtn');
   const saveBtn = document.getElementById('saveBtn');
   const loadBtn = document.getElementById('loadBtn');
+  const publishBtn = document.getElementById('publishBtn');
+  const publishStatus = document.getElementById('publishStatus');
+  const SHARED_KEY = 'biodataDoc';
   const loadInput = document.getElementById('loadInput');
   const toggleLogBtn = document.getElementById('toggleLogBtn');
   const changelogPanel = document.getElementById('changelogPanel');
@@ -542,6 +567,7 @@
   let editMode = false;
   let changeLog = [];
   let dragSrcEl = null;
+  let dragSrcRow = null;
   let history = [];
   let historyIndex = -1;
   let isRestoring = false;
@@ -701,11 +727,38 @@
   function refreshSectionControls(){
     const sections = Array.from(sectionsContainer.children);
     sections.forEach((sec, idx) => {
-      const upBtn = sec.querySelector('[data-move="up"]');
-      const downBtn = sec.querySelector('[data-move="down"]');
+      const upBtn = sec.querySelector('.sec-move[data-move="up"]');
+      const downBtn = sec.querySelector('.sec-move[data-move="down"]');
       if(upBtn) upBtn.disabled = idx === 0;
       if(downBtn) downBtn.disabled = idx === sections.length - 1;
     });
+  }
+
+  function refreshFieldControls(fieldsList){
+    if(!fieldsList) return;
+    const rows = Array.from(fieldsList.children);
+    rows.forEach((row, idx) => {
+      const upBtn = row.querySelector('.row-move[data-move="up"]');
+      const downBtn = row.querySelector('.row-move[data-move="down"]');
+      if(upBtn) upBtn.disabled = idx === 0;
+      if(downBtn) downBtn.disabled = idx === rows.length - 1;
+    });
+  }
+
+  function moveFieldRow(row, direction){
+    if(!editMode) return;
+    const fieldsList = row.parentElement;
+    if(!fieldsList) return;
+    const sec = row.closest('.biodata-section');
+    const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
+    if(direction === -1 && row.previousElementSibling){
+      fieldsList.insertBefore(row, row.previousElementSibling);
+      addChange(secTitle ? `Moved a field up in "${secTitle}"` : 'Moved a field up');
+    } else if(direction === 1 && row.nextElementSibling){
+      fieldsList.insertBefore(row.nextElementSibling, row);
+      addChange(secTitle ? `Moved a field down in "${secTitle}"` : 'Moved a field down');
+    }
+    refreshFieldControls(fieldsList);
   }
 
   function setEditableState(){
@@ -718,6 +771,7 @@
       : 'View-only mode is active. Use Edit mode to make changes.';
     addSectionTopBtn.hidden = !editMode;
     saveBtn.hidden = !editMode;
+    publishBtn.hidden = !editMode;
     toggleLogBtn.hidden = !editMode;
     undoBtn.hidden = !editMode;
     redoBtn.hidden = !editMode;
@@ -796,22 +850,81 @@
     valueEl.dataset.fieldName = 'field details';
     valueEl.textContent = value;
 
+    const controls = document.createElement('div');
+    controls.className = 'row-controls no-print';
+
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'row-move drag-handle';
+    dragHandle.title = 'Drag to reorder';
+    dragHandle.innerHTML = '&#8942;&#8942;';
+    dragHandle.draggable = true;
+    dragHandle.addEventListener('dragstart', (e) => {
+      if(!editMode){ e.preventDefault(); return; }
+      dragSrcRow = row;
+      row.classList.add('dragging-row');
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', ''); }catch(err){}
+    });
+    dragHandle.addEventListener('dragend', () => {
+      row.classList.remove('dragging-row');
+      document.querySelectorAll('.field-row.drag-over-row').forEach(r => r.classList.remove('drag-over-row'));
+    });
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'row-move';
+    upBtn.dataset.move = 'up';
+    upBtn.title = 'Move field up';
+    upBtn.innerHTML = '&uarr;';
+    upBtn.addEventListener('click', () => moveFieldRow(row, -1));
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'row-move';
+    downBtn.dataset.move = 'down';
+    downBtn.title = 'Move field down';
+    downBtn.innerHTML = '&darr;';
+    downBtn.addEventListener('click', () => moveFieldRow(row, 1));
+
     const delBtn = document.createElement('button');
-    delBtn.className = 'row-del no-print';
+    delBtn.className = 'row-del';
     delBtn.title = 'Remove field';
     delBtn.innerHTML = '&times;';
     delBtn.addEventListener('click', () => {
+      const fieldsList = row.parentElement;
       const sec = row.closest('.biodata-section');
       const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
       row.remove();
       addChange(secTitle ? `Removed a field from "${secTitle}"` : 'Removed a field');
+      refreshFieldControls(fieldsList);
     });
+
+    controls.append(dragHandle, upBtn, downBtn, delBtn);
 
     attachPlaceholderBehavior(labelEl, 'Label', false);
     attachPlaceholderBehavior(valueEl, 'Details', false);
 
-    row.append(labelEl, sep, valueEl, delBtn);
-    setEditableState();
+    row.append(labelEl, sep, valueEl, controls);
+
+    row.addEventListener('dragover', (e) => {
+      if(!editMode || !dragSrcRow || dragSrcRow.parentElement !== row.parentElement) return;
+      e.preventDefault();
+      if(dragSrcRow !== row){ row.classList.add('drag-over-row'); }
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over-row'));
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      row.classList.remove('drag-over-row');
+      if(dragSrcRow && dragSrcRow !== row && dragSrcRow.parentElement === row.parentElement){
+        const fieldsList = row.parentElement;
+        const rect = row.getBoundingClientRect();
+        const before = (e.clientY - rect.top) < rect.height / 2;
+        fieldsList.insertBefore(dragSrcRow, before ? row : row.nextSibling);
+        const sec = row.closest('.biodata-section');
+        const secTitle = sec ? (sec.querySelector('.section-title').innerText.trim() || 'Untitled section') : '';
+        addChange(secTitle ? `Reordered a field in "${secTitle}"` : 'Reordered a field');
+        refreshFieldControls(fieldsList);
+      }
+      dragSrcRow = null;
+    });
 
     if(isNew){
       setTimeout(() => { labelEl.focus(); selectAllText(labelEl); }, 0);
@@ -931,6 +1044,7 @@
     const fieldsList = document.createElement('div');
     fieldsList.className = 'fields-list';
     (data.fields || []).forEach(f => fieldsList.appendChild(createFieldRow(f.label, f.value, false)));
+    refreshFieldControls(fieldsList);
 
     const addFieldBtn = document.createElement('button');
     addFieldBtn.className = 'add-field-btn no-print';
@@ -938,6 +1052,8 @@
     addFieldBtn.addEventListener('click', () => {
       fieldsList.appendChild(createFieldRow('Label', 'Details', true));
       addChange(`Added a field to "${titleEl.innerText.trim() || 'Untitled'}"`);
+      setEditableState();
+      refreshFieldControls(fieldsList);
     });
 
     section.append(head, introEl, fieldsList, addFieldBtn);
@@ -1001,6 +1117,7 @@
     if(!editMode) return;
     const section = createSection({title:'New Section', intro:'', fields:[{label:'Label', value:'Details'}]}, true);
     sectionsContainer.appendChild(section);
+    setEditableState();
     addChange('Added a new section "New Section"');
     refreshSectionControls();
     section.scrollIntoView({behavior:'smooth', block:'center'});
@@ -1189,7 +1306,52 @@
     const data = getDocumentData();
     const name = data.name || 'Biodata';
     downloadBlob(JSON.stringify(data, null, 2), `${name.replace(/\s+/g,'_')}.biodata`, 'application/json');
-    addChange('Saved a biodata file');
+    addChange('Downloaded a local backup file');
+  });
+
+  async function safeStorageGet(key, shared){
+    try{
+      if(!window.storage) return null;
+      const res = await window.storage.get(key, shared);
+      return res && res.value ? JSON.parse(res.value) : null;
+    }catch(err){
+      return null;
+    }
+  }
+
+  function formatPublishStatus(data){
+    if(!data || !data.shareVersion){
+      return window.storage ? 'Not published yet' : 'Shared publishing unavailable here';
+    }
+    const when = data.publishedAt ? new Date(data.publishedAt).toLocaleString() : '';
+    return `<b>Version ${data.shareVersion}</b> published ${when}`;
+  }
+
+  function updatePublishStatus(data){
+    publishStatus.innerHTML = formatPublishStatus(data);
+  }
+
+  publishBtn.addEventListener('click', async () => {
+    if(!window.storage){
+      window.alert('Publishing to everyone only works when this page is opened as a Claude-hosted artifact link. You can still use "Download backup" to share a file directly.');
+      return;
+    }
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Publishing…';
+    try{
+      const existing = await safeStorageGet(SHARED_KEY, true);
+      const data = getDocumentData();
+      data.shareVersion = ((existing && existing.shareVersion) || 0) + 1;
+      data.publishedAt = new Date().toISOString();
+      await window.storage.set(SHARED_KEY, JSON.stringify(data), true);
+      updatePublishStatus(data);
+      addChange(`Published version ${data.shareVersion} for everyone`);
+    }catch(err){
+      window.alert('Publishing failed. Please try again.');
+    }finally{
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Publish update';
+    }
   });
 
   loadBtn.addEventListener('click', () => loadInput.click());
@@ -1201,7 +1363,7 @@
       try {
         const data = JSON.parse(e.target.result);
         loadDocumentData(data);
-        addChange(`Opened saved file "${file.name}"`);
+        addChange(`Opened backup file "${file.name}"`);
       } catch (error) {
         window.alert('This file could not be opened. Please choose a valid .biodata file.');
       }
@@ -1264,10 +1426,19 @@
     downloadBlob(fullHtml, name.replace(/\s+/g,'_') + '_Biodata.doc', 'application/msword');
   });
 
-  defaultSections.forEach(s => sectionsContainer.appendChild(createSection(s, false)));
-  renderChangeLog();
-  setEditableState();
-  takeSnapshot();
+  async function init(){
+    const shared = await safeStorageGet(SHARED_KEY, true);
+    if(shared && shared.sections && shared.sections.length){
+      loadDocumentData(shared);
+    } else {
+      defaultSections.forEach(s => sectionsContainer.appendChild(createSection(s, false)));
+      renderChangeLog();
+      setEditableState();
+      takeSnapshot();
+    }
+    updatePublishStatus(shared);
+  }
+  init();
 })();
 </script>
 </body>
